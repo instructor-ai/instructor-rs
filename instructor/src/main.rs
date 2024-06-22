@@ -1,5 +1,5 @@
 use instruct_macros::InstructMacro;
-use serde::de::{self, Visitor};
+use serde::de::{self};
 use serde::{Deserialize, Serialize};
 use std::env; // Import the macro
 
