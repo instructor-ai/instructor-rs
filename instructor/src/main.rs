@@ -1,4 +1,5 @@
 use instruct_macros::InstructMacro;
+use serde::de::{self, Visitor};
 use serde::{Deserialize, Serialize};
 use std::env; // Import the macro
 
@@ -16,6 +17,7 @@ use parse::{ParameterInfo, StructInfo};
 /// This is a model which represents a single individual user
 struct UserInfo {
     /// This is the name of the user
+    #[serde(deserialize_with = "uppercase_name")]
     name: String,
     /// This is the age of the user
     age: u8,
@@ -23,10 +25,38 @@ struct UserInfo {
     city: String,
 }
 
-impl instructor::InstructMacro for UserInfo {
-    fn get_info() -> StructInfo {
-        UserInfo::get_info()
+fn uppercase_name<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    struct UppercaseNameVisitor;
+
+    impl<'de> de::Visitor<'de> for UppercaseNameVisitor {
+        type Value = String;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("an uppercase string")
+        }
+
+        fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            if value
+                .chars()
+                .all(|c| c.is_uppercase() || !c.is_alphabetic())
+            {
+                Ok(value.to_string())
+            } else {
+                Err(E::custom(format!(
+                    "name should be in uppercase (Eg. JANE vs jane), got '{}'",
+                    value
+                )))
+            }
+        }
     }
+
+    deserializer.deserialize_str(UppercaseNameVisitor)
 }
 
 fn main() {

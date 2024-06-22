@@ -80,8 +80,8 @@ pub fn struct_info_derive(input: TokenStream) -> TokenStream {
         .collect();
 
     let expanded = quote! {
-        impl #name {
-            pub fn get_info() -> StructInfo {
+        impl instructor::InstructMacro for #name {
+            fn get_info() -> parse::StructInfo {
                 let mut parameters = Vec::new();
                 #(#parameters)*
 

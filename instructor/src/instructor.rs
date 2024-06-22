@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, vec};
 
 use openai_api_rs::v1::{
     api::Client,
@@ -47,13 +47,53 @@ impl InstructorClient {
         properties
     }
 
+    fn get_required(parameters: Vec<ParameterInfo>) -> Vec<String> {
+        parameters.iter().map(|p| p.name.clone()).collect()
+    }
+
     pub fn chat_completion<T>(&self, req: ChatCompletionRequest) -> Result<T, APIError>
     where
         T: InstructMacro + for<'de> serde::Deserialize<'de>,
     {
         let parsed_model: StructInfo = T::get_info();
+        let mut error_message: Option<String> = None;
 
-        let properties = Self::get_parameters::<T>(parsed_model.parameters);
+        for _ in 0..3 {
+            let mut req = req.clone();
+
+            if let Some(ref error) = error_message {
+                let new_message = chat_completion::ChatCompletionMessage {
+                    role: chat_completion::MessageRole::user,
+                    content: chat_completion::Content::Text(error.clone()),
+                    name: None,
+                };
+                req.messages.push(new_message);
+            }
+
+            let result = self._retry_sync::<T>(req.clone(), parsed_model.clone());
+            match result {
+                Ok(value) => return Ok(value),
+                Err(e) => {
+                    error_message =
+                        Some(format!("Validation Error: {:?}. Please fix the issue", e));
+                    continue;
+                }
+            }
+        }
+
+        panic!("Unable to derive model")
+    }
+
+    fn _retry_sync<T>(
+        &self,
+        req: ChatCompletionRequest,
+        parsed_model: StructInfo,
+    ) -> Result<T, serde_json::Error>
+    where
+        T: InstructMacro + for<'de> serde::Deserialize<'de>,
+    {
+        let properties = Self::get_parameters::<T>(parsed_model.parameters.clone());
+
         let func_call = chat_completion::Tool {
             r#type: chat_completion::ToolType::Function,
             function: chat_completion::Function {
@@ -62,7 +102,7 @@ impl InstructorClient {
                 parameters: chat_completion::FunctionParameters {
                     schema_type: chat_completion::JSONSchemaType::Object,
                     properties: Some(properties),
-                    required: Some(vec![]),
+                    required: Some(Self::get_required(parsed_model.parameters.clone())),
                 },
             },
         };
@@ -83,8 +123,7 @@ impl InstructorClient {
                         let tool_call = &tool_calls[0];
                         let arguments = tool_call.function.arguments.clone().unwrap();
 
-                        let res: T = serde_json::from_str(&arguments).unwrap();
-                        Ok(res)
+                        return serde_json::from_str(&arguments);
                     }
                     _ => panic!("Unexpected number of tool calls"),
                 }
