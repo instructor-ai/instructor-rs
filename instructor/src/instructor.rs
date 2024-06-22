@@ -1,3 +1,4 @@
+use instruct_macros_types::InstructMacro;
 use std::{collections::HashMap, vec};
 
 use openai_api_rs::v1::{
@@ -6,14 +7,10 @@ use openai_api_rs::v1::{
     error::APIError,
 };
 
-use crate::parse::{ParameterInfo, StructInfo};
+use instruct_macros_types::{ParameterInfo, StructInfo};
 
 pub struct InstructorClient {
     client: Client,
-}
-
-pub trait InstructMacro {
-    fn get_info() -> StructInfo;
 }
 
 impl InstructorClient {

@@ -1,13 +1,17 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+pub trait InstructMacro {
+    fn get_info() -> StructInfo;
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct StructInfo {
     pub name: String,
     pub description: String,
     pub parameters: Vec<ParameterInfo>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct ParameterInfo {
     pub name: String,
     pub r#type: String,

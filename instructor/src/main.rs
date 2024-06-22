@@ -1,17 +1,16 @@
-use instruct_macros::InstructMacro;
 use serde::de::{self};
 use serde::{Deserialize, Serialize};
 use std::env; // Import the macro
 
 mod instructor;
-mod parse; // Import the trait module
 
+use instruct_macros::InstructMacro; // Ensure this is a derive macro
+use instruct_macros_types::{ParameterInfo, StructInfo}; // Import the trait
 use openai_api_rs::v1::{
     api::Client,
     chat_completion::{self, ChatCompletionRequest},
     common::GPT3_5_TURBO_0613,
 };
-use parse::{ParameterInfo, StructInfo};
 
 #[derive(InstructMacro, Deserialize, Serialize, Debug)]
 /// This is a model which represents a single individual user

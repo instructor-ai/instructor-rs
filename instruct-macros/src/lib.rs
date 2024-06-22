@@ -3,8 +3,8 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput, Fields, Lit, Meta};
 
-#[proc_macro_derive(InstructMacro, attributes(doc))]
-pub fn struct_info_derive(input: TokenStream) -> TokenStream {
+#[proc_macro_derive(InstructMacro)]
+pub fn instruct_macro_derive(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let input = parse_macro_input!(input as DeriveInput);
 
@@ -80,8 +80,8 @@ pub fn struct_info_derive(input: TokenStream) -> TokenStream {
         .collect();
 
     let expanded = quote! {
-        impl instructor::InstructMacro for #name {
-            fn get_info() -> parse::StructInfo {
+        impl instruct_macros_types::InstructMacro for #name {
+            fn get_info() -> instruct_macros_types::StructInfo {
                 let mut parameters = Vec::new();
                 #(#parameters)*
 
