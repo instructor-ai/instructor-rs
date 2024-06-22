@@ -3,8 +3,11 @@ name = "instruct-macros"
 version = "0.1.0"
 edition = "2018"
 authors = ["Ivan Leo <ivan@jxnl.co>", "Jason Liu"]
-description = "Instructor Macros are a collection of simple macros that we're using in Instructor-AI to generate json schema from Serde Objects"
-readme = "../README.md"
+description = "instruct-macros are a collection of simple macros that we're using in Instructor-AI to generate json schema from Serde Objects"
+readme = "README.md"
+[package.metadata]
+changelog = "CHANGELOG.md"
+
 homepage = "https://rust.useinstructor.com"
 repository = "https://github.com/instructor-ai/instructor-rs"
 license = "MIT OR Apache-2.0"
