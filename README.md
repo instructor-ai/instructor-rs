@@ -1,28 +1,90 @@
 # instructor-rs
 
-Instructor is a RUst library that makes it a breeze to work with structured outputs from large language models (LLMs). it provides a simple and easy API to help maanage LLM Workflows by abstrating away validation, retries and streamning responses.
+Instructor is a Rust library that makes it a breeze to work with structured outputs from large language models (LLMs). it provides a simple and easy API to help maanage LLM Workflows by abstrating away validation, retries and streamning responses.
 
 Now, let's see Instructor in action with a simple example:
 
 ```rust
-#[derive(InstructModel)]
-struct UserInfo{
-    name: str
-    age: u8
+let client = Client::new(env::var("OPENAI_API_KEY").unwrap().to_string());
+let instructor_client = from_openai(client);
+
+#[derive(InstructMacro, Debug, Serialize, Deserialize)]
+// This represents a single user
+struct UserInfo {
+    // This represents the name of the user
+    name: String,
+    // This represents the age of the user
+    age: u8,
 }
 
-let client = Instructor::from_openai(Client::new(env::var("OPENAI_API_KEY").unwrap().to_string()));
+let req = ChatCompletionRequest::new(
+    GPT3_5_TURBO.to_string(),
+    vec![chat_completion::ChatCompletionMessage {
+        role: chat_completion::MessageRole::user,
+        content: chat_completion::Content::Text(String::from(
+            "John Doe is a 30 year old software engineer",
+        )),
+        name: None,
+    }],
+);
 
-let user = ChatCompletionRequest::new(
-        GPT3_5_TURBO_0613.to_string(),
-        vec![chat_completion::ChatCompletionMessage {
-            role: chat_completion::MessageRole::user,
-            content: chat_completion::Content::Text(String::from("John Doe is 30 years old")),
-            name: None,
-        }],
-        vec![UserInfo]
-)
+let result = instructor_client
+    .chat_completion::<UserInfo>(req, 3)
+    .unwrap();
 
-println!("{}", UserInfo.name) // John Doe
-println!("{}", UserInfo.age)  // 30
+println!("{}", result.name); // John Doe
+println!("{}", result.age); // 30
+
+```
+
+## Structured Validation
+
+We can use native inbuilt serde functions in order to handle validation of specific values.
+
+```rust
+let client = Client::new(env::var("OPENAI_API_KEY").unwrap().to_string());
+let instructor_client = from_openai(client);
+
+#[derive(InstructMacro, Debug, Serialize, Deserialize)]
+// This represents a single user
+struct UserInfo {
+    // This represents the name of the user
+    #[serde(deserialize_with = "validate_uppercase")]
+    name: String,
+    // This represents the age of the user
+    age: u8,
+}
+
+fn validate_uppercase<'de, D>(de: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(de)?;
+    println!("{}", s);
+    if s.chars().any(|c| c.is_lowercase()) {
+        return Err(de::Error::custom(format!(
+            "Name '{}' should be entirely in uppercase. Examples: 'TIMOTHY', 'JANE SMITH'",
+            s
+        )));
+    }
+    Ok(s.to_uppercase())
+}
+
+let req = ChatCompletionRequest::new(
+    GPT3_5_TURBO.to_string(),
+    vec![chat_completion::ChatCompletionMessage {
+        role: chat_completion::MessageRole::user,
+        content: chat_completion::Content::Text(String::from(
+            "John Doe is a 30 year old software engineer",
+        )),
+        name: None,
+    }],
+);
+
+let result = instructor_client
+    .chat_completion::<UserInfo>(req, 3)
+    .unwrap();
+
+println!("{}", result.name); // JOHN DOE
+println!("{}", result.age); // 30
 ```

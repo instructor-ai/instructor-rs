@@ -48,14 +48,18 @@ impl InstructorClient {
         parameters.iter().map(|p| p.name.clone()).collect()
     }
 
-    pub fn chat_completion<T>(&self, req: ChatCompletionRequest) -> Result<T, APIError>
+    pub fn chat_completion<T>(
+        &self,
+        req: ChatCompletionRequest,
+        max_retries: u8,
+    ) -> Result<T, APIError>
     where
         T: InstructMacro + for<'de> serde::Deserialize<'de>,
     {
         let parsed_model: StructInfo = T::get_info();
         let mut error_message: Option<String> = None;
 
-        for _ in 0..3 {
+        for _ in 0..max_retries {
             let mut req = req.clone();
 
             if let Some(ref error) = error_message {
@@ -69,7 +73,9 @@ impl InstructorClient {
 
             let result = self._retry_sync::<T>(req.clone(), parsed_model.clone());
             match result {
-                Ok(value) => return Ok(value),
+                Ok(value) => {
+                    return Ok(value);
+                }
                 Err(e) => {
                     error_message =
                         Some(format!("Validation Error: {:?}. Please fix the issue", e));
@@ -122,7 +128,12 @@ impl InstructorClient {
 
                         return serde_json::from_str(&arguments);
                     }
-                    _ => panic!("Unexpected number of tool calls"),
+                    _ => {
+                        // TODO: Support multiple tool calls at some point
+                        let error_message =
+                            format!("Unexpected number of tool calls: {:?}", tool_calls);
+                        return Err(serde::de::Error::custom(error_message));
+                    }
                 }
             }
             _ => panic!("Unexpected finish reason"),

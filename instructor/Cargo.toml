@@ -1,22 +1,24 @@
 [package]
-name = "instructor"
+name = "instructor-ai"
 version = "0.1.0"
 edition = "2021"
 authors = ["Ivan Leo <ivan@jxnl.co>", "Jason Liu"]
-description = "Instructor AI is a simple crate that allows for users to do validated structured outputs"
-readme = "../../README.md"
+description = "instructor-ai is a simple crate that allows for users to do validated structured outputs"
+readme = "../README.md"
 homepage = "https://rust.useinstructor.com"
 repository = "https://github.com/instructor-ai/instructor-rs"
 license = "MIT OR Apache-2.0"
 
+[package.metadata]
+changelog = "CHANGELOG.md"
 
 [dependencies]
-instruct-macros = { path = "../instruct-macros", version = "0.1.0" }
+instruct-macros = "0.1.1"
 openai-api-rs = "4.1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-instruct-macros-types = { path = "../instruct-macros-types", version = "0.1.0" }
+instruct-macros-types = "0.1.2"
 
-[[bin]]
-name = "main"
-path = "src/main.rs"
+[lib]
+name = "instructor_ai"
+path = "src/lib.rs"
