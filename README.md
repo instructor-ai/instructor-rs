@@ -26,3 +26,18 @@ let user = ChatCompletionRequest::new(
 println!("{}", UserInfo.name) // John Doe
 println!("{}", UserInfo.age)  // 30
 ```
+
+
+## How to run examples
+
+Try out the `readme`, `simple` and `weather` examples by running the following commands:
+
+```bash
+OPENAI_API_KEY=sk-your-key \
+cargo run -p instructor-rs \
+--example simple
+```
+
+## Note
+
+This implementation is 100% in development was just hacked together for reference and to explore the api shown on the readme. It is not intended to be used in production, and likely misses a lot of the projects core features.

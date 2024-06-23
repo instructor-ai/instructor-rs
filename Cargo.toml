@@ -1,0 +1,3 @@
+[workspace]
+members = ["instruct_model", "instruct_model_derive", "instructor_rs"]
+resolver = "2"
