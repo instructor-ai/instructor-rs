@@ -2,7 +2,7 @@
 name = "instruct-macros"
 version = "0.1.1"
 edition = "2018"
-authors = ["Ivan Leo <ivan@jxnl.co>", "Jason Liu"]
+authors = ["Ivan Leo <ivanleomk@gmail.com>"]
 description = "instruct-macros are a collection of simple macros that we're using in Instructor-AI to generate json schema from Serde Objects"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
