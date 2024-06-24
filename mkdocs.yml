@@ -77,6 +77,13 @@ markdown_extensions:
   - md_in_html
   - toc:
       permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
 nav:
   - Introduction:
       - Welcome To Instructor: "index.md"
