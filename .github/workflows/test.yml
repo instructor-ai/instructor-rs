@@ -1,0 +1,29 @@
+name: Cargo Build & Test
+
+on:
+  push:
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build_and_test:
+    name: Rust project - latest
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - beta
+          - nightly
+        crate:
+          - instruct-macros
+          - instructor
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
+      - run: cd ${{ matrix.crate }} && cargo build --verbose
+      - run: cd ${{ matrix.crate }} && cargo test --verbose
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
