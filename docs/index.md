@@ -17,7 +17,7 @@ serde_json = "1.0"
 instruct-macros-types = "0.1.2"
 ```
 
-Getting started with structured extraction is then as simple as
+Getting started with structured extraction is then as simple as declaring a new struct with the `InstructMacro` and importing the `ParamterInfo` and `StructInfo` types.
 
 ```rust
 use std::env;
