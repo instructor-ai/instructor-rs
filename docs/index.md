@@ -2,7 +2,41 @@
 
 Instructor makes it easy to get structured data like JSON from LLMs like GPT-3.5, GPT-4, GPT-4-Vision, and open-source models including Mistral/Mixtral, Anyscale, Ollama, and llama-cpp-python.
 
-Our library is currently in active development and we're looking for active contributors interested in contributing!
+> Instructor's Rust Client is in active developement. This means that the api and package might change moving forward. We are looking for active contributors to the repository in the meantime to help flesh out more of the features.
+
+## Roadmap
+
+Here is a rough roadmap of features we'd like to implement
+
+**Struct -> JSON parsing**
+
+- [x] Strings
+- [ ] Handle Booleans
+- [ ] Integers
+- [ ] Handle String Enums
+- [ ] Lists
+- [ ] Nested Structs
+- [ ] Union Types (Eg. Struct1 | Struct 2 )
+
+**Validators**
+
+- [ ] Support different types of integers (Eg. u8, u32, u64 -> Add a validator automatically which checks that we have a value > 0 and < max value)
+- [ ] Validation Context (Eg. We can validate citations by passing in original passage )
+
+**Clients**
+
+- [x] OpenAI
+- [ ] Anthropic
+- [ ] Cohere
+- [ ] Gemini
+- [ ] Mistral
+- [ ] Llama-cpp
+
+**CLI**
+
+- [ ] Support Batch jobs using Instructor
+- [ ] Support Fine-Tuning jobs using instructor
+- [ ] Monitor Usage
 
 ## Getting Started
 
