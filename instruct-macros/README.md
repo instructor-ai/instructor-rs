@@ -9,7 +9,7 @@ use instruct_macros::InstructMacro; // Ensure this is a derive macro
 use instruct_macros_types::{ParameterInfo, StructInfo}; // Import the trait
 
 #[derive(InstructMacro, Deserialize, Serialize, Debug)]
-/// This is a model which represents a single individual user
+#[doc = "This is a description"]
 struct UserInfo {
     /// This is the name of the user
     #[serde(deserialize_with = "uppercase_name")]
@@ -21,4 +21,28 @@ struct UserInfo {
 }
 ```
 
-This in turn will expose a get_info() method on your struct that returns a body that looks omsething like this
+This in turn will expose a get_info() method on your struct that returns a body that looks
+
+```rust
+StructInfo {
+  name: "UserInfo",
+  description: "This is a description",
+  parameters: [
+    ParameterInfo {
+      name: "name",
+      type: "String",
+      comment: " This is the name of the user"
+    },
+    ParameterInfo {
+      name: "age",
+      type: "u8",
+      comment: " This is the age of the user"
+    },
+    ParameterInfo {
+      name: "city",
+      type: "String",
+      comment: " This is the city of the user"
+    }
+  ]
+}
+```

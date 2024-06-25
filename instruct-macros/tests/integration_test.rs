@@ -10,6 +10,7 @@ mod tests {
     #[test]
     fn test_string_conversion() {
         #[derive(InstructMacro, Debug)]
+        #[doc = "This is a description"]
         struct TestStruct {
             ///This is a test field
             field1: String,
@@ -19,7 +20,7 @@ mod tests {
         let info = TestStruct::get_info();
         let desired_struct = StructInfo {
             name: "TestStruct".to_string(),
-            description: "".to_string(),
+            description: "This is a description".to_string(),
             parameters: vec![
                 ParameterInfo {
                     name: "field1".to_string(),
@@ -33,6 +34,7 @@ mod tests {
                 },
             ],
         };
+
         assert!(info == desired_struct);
     }
 }

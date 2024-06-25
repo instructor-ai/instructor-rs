@@ -15,21 +15,24 @@ pub fn instruct_macro_derive(input: TokenStream) -> TokenStream {
     let struct_comment = input
         .attrs
         .iter()
-        .filter_map(|attr| {
+        .find_map(|attr| {
             if attr.path.is_ident("doc") {
-                match attr.parse_meta().ok()? {
-                    Meta::NameValue(meta) => {
+                attr.parse_meta().ok().and_then(|meta| {
+                    if let Meta::NameValue(meta) = meta {
                         if let Lit::Str(lit) = meta.lit {
-                            return Some(lit.value());
+                            Some(lit.value().trim().to_string())
+                        } else {
+                            None
                         }
+                    } else {
+                        None
                     }
-                    _ => {}
-                }
+                })
+            } else {
+                None
             }
-            None
         })
-        .collect::<Vec<String>>()
-        .join(" ");
+        .unwrap_or_default();
 
     // Process each field in the struct
     let fields = if let Data::Struct(data) = &input.data {
