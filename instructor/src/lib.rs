@@ -74,6 +74,15 @@ impl InstructorClient {
             let result = self._retry_sync::<T>(req.clone(), parsed_model.clone());
             match result {
                 Ok(value) => {
+                    match T::validate(&value) {
+                        Ok(_) => {}
+                        Err(e) => {
+                            error_message =
+                                Some(format!("Validation Error: {:?}. Please fix the issue", e));
+                            continue;
+                        }
+                    }
+
                     return Ok(value);
                 }
                 Err(e) => {
@@ -84,7 +93,9 @@ impl InstructorClient {
             }
         }
 
-        panic!("Unable to derive model")
+        Err(APIError {
+            message: format!("Unable to derive model: {:?}", error_message),
+        })
     }
 
     fn _retry_sync<T>(

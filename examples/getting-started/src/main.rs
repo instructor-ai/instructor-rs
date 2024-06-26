@@ -1,6 +1,6 @@
 use std::env;
 
-use instruct_macros::InstructMacro;
+use instruct_macros::{validate, InstructMacro};
 use instruct_macros_types::{ParameterInfo, StructInfo};
 use instructor_ai::from_openai;
 use openai_api_rs::v1::{
@@ -18,9 +18,21 @@ fn main() {
     // This represents a single user
     struct UserInfo {
         // This represents the name of the user
+        #[validate(custom = "validate_uppercase")]
         name: String,
         // This represents the age of the user
         age: u8,
+    }
+
+    #[validate]
+    fn validate_uppercase(s: &String) -> Result<String, String> {
+        if s.chars().any(|c| c.is_lowercase()) {
+            return Err(format!(
+                "Name '{}' should be entirely in uppercase. Examples: 'TIMOTHY', 'JANE SMITH'",
+                s
+            ));
+        }
+        Ok(s.to_uppercase())
     }
 
     let req = ChatCompletionRequest::new(
@@ -38,6 +50,6 @@ fn main() {
         .chat_completion::<UserInfo>(req, 3)
         .unwrap();
 
-    println!("{}", result.name); // John Doe
+    println!("{}", result.name); // JOHN DOE
     println!("{}", result.age); // 30
 }

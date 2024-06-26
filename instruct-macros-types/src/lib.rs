@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 pub trait InstructMacro {
     fn get_info() -> StructInfo;
+    fn validate(&self) -> Result<(), String>;
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
