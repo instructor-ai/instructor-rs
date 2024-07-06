@@ -1,7 +1,7 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use syn::{parse_macro_input, Data, DeriveInput, Fields, Lit, Meta, NestedMeta};
+use syn::{parse_macro_input, Data, DeriveInput, Fields, Lit, Meta, Expr};
 
 #[proc_macro_derive(InstructMacro, attributes(validate))]
 pub fn instruct_validate_derive(input: TokenStream) -> TokenStream {
@@ -25,9 +25,9 @@ pub fn instruct_validate_derive(input: TokenStream) -> TokenStream {
             let field_name = &f.ident;
             f.attrs
                 .iter()
-                .find(|attr| attr.path.is_ident("validate"))
+                .find(|attr| attr.path().is_ident("validate"))
                 .map(|attr| {
-                    let meta = attr.parse_meta().expect("Unable to parse attribute");
+                    let meta = attr.parse_args().expect("Unable to parse attribute");
                     parse_validation_attribute(field_name, &meta)
                 })
         })
@@ -35,20 +35,22 @@ pub fn instruct_validate_derive(input: TokenStream) -> TokenStream {
 
     // Extract struct-level comment
     let struct_comment = input
-        .attrs
-        .iter()
-        .filter_map(|attr| {
-            if attr.path.is_ident("doc") {
-                if let Ok(Meta::NameValue(meta)) = attr.parse_meta() {
-                    if let Lit::Str(lit) = meta.lit {
+    .attrs
+    .iter()
+    .filter_map(|attr| {
+        if attr.path().is_ident("doc") {
+            if let Ok(Meta::NameValue(meta)) = attr.parse_args::<Meta>() {
+                if let Expr::Lit(expr_lit) = &meta.value {
+                    if let Lit::Str(lit) = &expr_lit.lit {
                         return Some(lit.value());
                     }
                 }
             }
-            None
-        })
-        .collect::<Vec<String>>()
-        .join(" ");
+        }
+        None
+    })
+    .collect::<Vec<String>>()
+    .join(" ");
 
     // Process each field in the struct
     let fields = if let Data::Struct(data) = &input.data {
@@ -73,8 +75,8 @@ pub fn instruct_validate_derive(input: TokenStream) -> TokenStream {
                 .attrs
                 .iter()
                 .filter_map(|attr| {
-                    if attr.path.is_ident("doc") {
-                        if let Ok(Meta::NameValue(meta)) = attr.parse_meta() {
+                    if attr.path().is_ident("doc") {
+                        if let Ok(Meta::NameValue(meta)) = attr.parse_args::<Meta>() {
                             if let Lit::Str(lit) = meta.lit {
                                 return Some(lit.value());
                             }

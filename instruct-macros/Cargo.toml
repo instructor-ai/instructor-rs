@@ -21,7 +21,7 @@ instruct-macros-types = { path = "../instruct-macros-types", version = "0.1.0" }
 proc-macro2 = "1.0.86"
 
 [dependencies.syn]
-version = "1.0"
+version = "2.0.68"
 features = ["full"]
 
 [dependencies.quote]
