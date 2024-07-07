@@ -13,7 +13,11 @@ mod tests {
         #[allow(dead_code)]
         // This is a struct
         struct TestStruct {
-            #[description("This is a sample example")]
+            #[description(
+                "This is a sample example \
+                that spans across \
+                three lines"
+            )]
             pub field1: String,
             #[description("This is a test field")]
             pub field2: str,
@@ -26,7 +30,7 @@ mod tests {
                 ParameterInfo {
                     name: "field1".to_string(),
                     r#type: "String".to_string(),
-                    comment: "This is a sample example".to_string(),
+                    comment: "This is a sample example that spans across three lines".to_string(),
                 },
                 ParameterInfo {
                     name: "field2".to_string(),
