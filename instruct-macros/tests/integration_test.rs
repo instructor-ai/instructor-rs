@@ -1,7 +1,7 @@
 extern crate instruct_macros_types;
 
 use instruct_macros::{validate, InstructMacro};
-use instruct_macros_types::{InstructMacro, ParameterInfo, StructInfo};
+use instruct_macros_types::{InstructMacro, Parameter, ParameterInfo, StructInfo};
 
 #[cfg(test)]
 mod tests {
@@ -27,16 +27,16 @@ mod tests {
             name: "TestStruct".to_string(),
             description: "".to_string(),
             parameters: vec![
-                ParameterInfo {
+                Parameter::Field(ParameterInfo {
                     name: "field1".to_string(),
                     r#type: "String".to_string(),
                     comment: "This is a sample example that spans across three lines".to_string(),
-                },
-                ParameterInfo {
+                }),
+                Parameter::Field(ParameterInfo {
                     name: "field2".to_string(),
                     r#type: "str".to_string(),
                     comment: "This is a test field".to_string(),
-                },
+                }),
             ],
         };
         println!("{:?}", desired_struct);

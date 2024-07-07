@@ -51,11 +51,11 @@ pub fn extract_parameters(fields: &syn::FieldsNamed) -> Vec<proc_macro2::TokenSt
             let field_comment = &field.description;
 
             quote! {
-                parameters.push(ParameterInfo {
+                parameters.push(Parameter::Field(ParameterInfo {
                     name: #field_name.to_string(),
                     r#type: #field_type.to_string(),
                     comment: #field_comment.to_string(),
-                });
+                }));
             }
         })
         .collect()
