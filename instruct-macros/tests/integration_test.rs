@@ -39,8 +39,8 @@ mod tests {
                 }),
             ],
         };
-        println!("{:?}", desired_struct);
-        println!("{:?}", info);
+        println!("Info: {:?}", info);
+        println!("Desired Struct: {:?}", desired_struct);
         assert!(info == desired_struct);
     }
 
@@ -80,5 +80,59 @@ mod tests {
         };
 
         assert!(user_info.validate().is_ok());
+    }
+
+    #[test]
+    fn test_nested_struct_macro() {
+        #[derive(InstructMacro, Debug)]
+        pub struct Address {
+            pub street: String,
+            pub city: String,
+        }
+
+        #[derive(InstructMacro, Debug)]
+        pub struct User {
+            pub name: String,
+            pub age: u8,
+            pub address: Address,
+        }
+
+        let info = User::get_info();
+        let desired_struct = StructInfo {
+            name: "User".to_string(),
+            description: "".to_string(),
+            parameters: vec![
+                Parameter::Field(ParameterInfo {
+                    name: "name".to_string(),
+                    r#type: "String".to_string(),
+                    comment: "".to_string(),
+                }),
+                Parameter::Field(ParameterInfo {
+                    name: "age".to_string(),
+                    r#type: "u8".to_string(),
+                    comment: "".to_string(),
+                }),
+                Parameter::Struct(StructInfo {
+                    name: "address".to_string(),
+                    description: "".to_string(),
+                    parameters: vec![
+                        Parameter::Field(ParameterInfo {
+                            name: "street".to_string(),
+                            r#type: "String".to_string(),
+                            comment: "".to_string(),
+                        }),
+                        Parameter::Field(ParameterInfo {
+                            name: "city".to_string(),
+                            r#type: "String".to_string(),
+                            comment: "".to_string(),
+                        }),
+                    ],
+                }),
+            ],
+        };
+
+        println!("{:?}", desired_struct);
+        println!("{:?}", info);
+        assert!(info == desired_struct);
     }
 }

@@ -12,6 +12,13 @@ pub struct StructInfo {
     pub parameters: Vec<Parameter>,
 }
 
+impl StructInfo {
+    pub fn wrap_info(mut self, new_name: String) -> Parameter {
+        self.name = new_name;
+        Parameter::Struct(self)
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Parameter {
     Struct(StructInfo),
@@ -32,6 +39,13 @@ pub struct EnumInfo {
     pub r#enum: Vec<String>,
     pub r#type: String,
     pub description: String,
+}
+
+impl EnumInfo {
+    pub fn wrap_info(mut self, new_name: String) -> Parameter {
+        self.title = new_name;
+        Parameter::Enum(self)
+    }
 }
 
 pub struct FieldInfo {
