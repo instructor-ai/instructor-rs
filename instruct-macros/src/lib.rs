@@ -1,9 +1,9 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
-use quote::{format_ident, quote};
-use syn::{parse_macro_input, Data, DeriveInput, Fields, Lit, Meta, Expr};
+use quote::quote;
+use syn::{parse_macro_input, Data, DeriveInput, Expr, ExprLit, Fields, Lit, Meta};
 
-#[proc_macro_derive(InstructMacro, attributes(validate))]
+#[proc_macro_derive(InstructMacro, attributes(validate, description))]
 pub fn instruct_validate_derive(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let input = parse_macro_input!(input as DeriveInput);
@@ -35,22 +35,22 @@ pub fn instruct_validate_derive(input: TokenStream) -> TokenStream {
 
     // Extract struct-level comment
     let struct_comment = input
-    .attrs
-    .iter()
-    .filter_map(|attr| {
-        if attr.path().is_ident("doc") {
-            if let Ok(Meta::NameValue(meta)) = attr.parse_args::<Meta>() {
-                if let Expr::Lit(expr_lit) = &meta.value {
-                    if let Lit::Str(lit) = &expr_lit.lit {
-                        return Some(lit.value());
+        .attrs
+        .iter()
+        .filter_map(|attr| {
+            if attr.path().is_ident("doc") {
+                if let Ok(Meta::NameValue(meta)) = attr.parse_args::<Meta>() {
+                    if let Expr::Lit(expr_lit) = &meta.value {
+                        if let Lit::Str(lit) = &expr_lit.lit {
+                            return Some(lit.value());
+                        }
                     }
                 }
             }
-        }
-        None
-    })
-    .collect::<Vec<String>>()
-    .join(" ");
+            None
+        })
+        .collect::<Vec<String>>()
+        .join(" ");
 
     // Process each field in the struct
     let fields = if let Data::Struct(data) = &input.data {
@@ -70,14 +70,14 @@ pub fn instruct_validate_derive(input: TokenStream) -> TokenStream {
             let field_name = &field.ident;
             let field_type = &field.ty;
 
-            // Extract field-level comment
             let field_comment = field
                 .attrs
                 .iter()
                 .filter_map(|attr| {
-                    if attr.path().is_ident("doc") {
-                        if let Ok(Meta::NameValue(meta)) = attr.parse_args::<Meta>() {
-                            if let Lit::Str(lit) = meta.lit {
+                    if attr.path().is_ident("description") {
+                        let meta = attr.parse_args().expect("Unable to parse attribute");
+                        if let Expr::Lit(expr_lit) = &meta {
+                            if let Lit::Str(lit) = &expr_lit.lit {
                                 return Some(lit.value());
                             }
                         }
@@ -130,26 +130,30 @@ fn parse_validation_attribute(
     field_name: &Option<syn::Ident>,
     meta: &Meta,
 ) -> proc_macro2::TokenStream {
-    let Meta::List(list) = meta else { panic!("Unsupported meta") };
-    
-    list.nested.iter().map(|nm| {
-        let NestedMeta::Meta(Meta::NameValue(nv)) = nm else { panic!("Unsupported nested attribute") };
-        let ident = &nv.path;
-        let lit = &nv.lit;
-        
-        match ident.get_ident().unwrap().to_string().as_str() {
-            "custom" => {
-                let Lit::Str(s) = lit else { panic!("Custom validator must be a string literal") };
-                let func = format_ident!("{}", s.value());
-                quote! {
+    let mut output = proc_macro2::TokenStream::new();
+
+    match meta {
+        Meta::NameValue(name_value) if name_value.path.is_ident("custom") => {
+            if let Expr::Lit(ExprLit {
+                lit: Lit::Str(lit_str),
+                ..
+            }) = &name_value.value
+            {
+                let func = syn::Ident::new(&lit_str.value(), proc_macro2::Span::call_site());
+                let tokens = quote! {
                     if let Err(e) = #func(&self.#field_name) {
                         return Err(format!("Validation failed for field '{}': {}", stringify!(#field_name), e));
                     }
-                }
-            },
-            _ => panic!("Unsupported validation type"),
+                };
+                output.extend(tokens);
+            } else {
+                panic!("Custom validator must be a string literal");
+            }
         }
-    }).collect()
+        _ => panic!("Unsupported validation attribute"),
+    }
+
+    output
 }
 
 /// Custom attribute macro for field validation in structs.

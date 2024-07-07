@@ -11,11 +11,12 @@ mod tests {
     fn test_string_conversion() {
         #[derive(InstructMacro, Debug)]
         #[allow(dead_code)]
+        // This is a struct
         struct TestStruct {
-            ///This is a test field
-            field1: String,
-            ///This is a test field
-            field2: str,
+            #[description("This is a sample example")]
+            pub field1: String,
+            #[description("This is a test field")]
+            pub field2: str,
         }
         let info = TestStruct::get_info();
         let desired_struct = StructInfo {
@@ -25,7 +26,7 @@ mod tests {
                 ParameterInfo {
                     name: "field1".to_string(),
                     r#type: "String".to_string(),
-                    comment: "This is a test field".to_string(),
+                    comment: "This is a sample example".to_string(),
                 },
                 ParameterInfo {
                     name: "field2".to_string(),
@@ -34,6 +35,8 @@ mod tests {
                 },
             ],
         };
+        println!("{:?}", desired_struct);
+        println!("{:?}", info);
         assert!(info == desired_struct);
     }
 
