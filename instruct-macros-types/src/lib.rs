@@ -1,8 +1,23 @@
 use serde::{Deserialize, Serialize};
 
 pub trait InstructMacro {
-    fn get_info() -> StructInfo;
+    fn get_info() -> InstructMacroResult;
     fn validate(&self) -> Result<(), String>;
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum InstructMacroResult {
+    Struct(StructInfo),
+    Enum(EnumInfo),
+}
+
+impl InstructMacroResult {
+    pub fn wrap_info(self, new_name: String) -> Parameter {
+        match self {
+            InstructMacroResult::Struct(struct_info) => struct_info.wrap_info(new_name),
+            InstructMacroResult::Enum(enum_info) => enum_info.wrap_info(new_name),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

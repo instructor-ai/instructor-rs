@@ -11,7 +11,50 @@ pub fn instruct_validate_derive(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let input = parse_macro_input!(input as DeriveInput);
 
-    // Used in the quasi-quotation below as `#name`
+    let expanded = match &input.data {
+        Data::Struct(_) => generate_instruct_macro_struct(&input),
+        Data::Enum(_) => generate_instruct_macro_enum(&input),
+        _ => panic!("InstructMacro can only be derived for structs and enums"),
+    };
+
+    // Hand the output tokens back to the compiler
+    TokenStream::from(expanded)
+}
+
+fn generate_instruct_macro_enum(input: &DeriveInput) -> proc_macro2::TokenStream {
+    let name = &input.ident;
+
+    let variants = match &input.data {
+        Data::Enum(data) => &data.variants,
+        _ => panic!("Only enums are supported"),
+    };
+
+    let enum_variants: Vec<String> = variants.iter().map(|v| v.ident.to_string()).collect();
+
+    let enum_info = quote! {
+        instruct_macros_types::InstructMacroResult::Enum(instruct_macros_types::EnumInfo {
+            title: stringify!(#name).to_string(),
+            r#enum: vec![#(#enum_variants.to_string()),*],
+            r#type: stringify!(#name).to_string(),
+            description: "".to_string(),
+        })
+    };
+
+    quote! {
+        impl instruct_macros_types::InstructMacro for #name {
+            fn get_info() -> instruct_macros_types::InstructMacroResult {
+                #enum_info
+            }
+
+
+            fn validate(&self) -> Result<(), String> {
+                Ok(())
+            }
+        }
+    }
+}
+
+fn generate_instruct_macro_struct(input: &DeriveInput) -> proc_macro2::TokenStream {
     let name = &input.ident;
 
     let fields = match &input.data {
@@ -70,15 +113,15 @@ pub fn instruct_validate_derive(input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         impl instruct_macros_types::InstructMacro for #name {
-            fn get_info() -> instruct_macros_types::StructInfo {
+            fn get_info() -> instruct_macros_types::InstructMacroResult {
                 let mut parameters = Vec::new();
                 #(#parameters)*
 
-                StructInfo {
+                instruct_macros_types::InstructMacroResult::Struct(StructInfo {
                     name: stringify!(#name).to_string(),
                     description: #struct_comment.to_string(),
                     parameters,
-                }
+                })
             }
 
             fn validate(&self) -> Result<(), String> {
@@ -88,8 +131,7 @@ pub fn instruct_validate_derive(input: TokenStream) -> TokenStream {
         }
     };
 
-    // Hand the output tokens back to the compiler
-    TokenStream::from(expanded)
+    expanded
 }
 
 /// Parses the validation attribute and generates corresponding validation code.

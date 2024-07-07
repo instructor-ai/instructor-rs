@@ -1,10 +1,15 @@
 extern crate instruct_macros_types;
 
 use instruct_macros::{validate, InstructMacro};
-use instruct_macros_types::{InstructMacro, Parameter, ParameterInfo, StructInfo};
+use instruct_macros_types::{
+    InstructMacro, InstructMacroResult, Parameter, ParameterInfo, StructInfo,
+};
 
 #[cfg(test)]
 mod tests {
+
+    use instruct_macros_types::EnumInfo;
+
     use super::*;
 
     #[test]
@@ -39,9 +44,13 @@ mod tests {
                 }),
             ],
         };
-        println!("Info: {:?}", info);
-        println!("Desired Struct: {:?}", desired_struct);
-        assert!(info == desired_struct);
+
+        let info_struct = match info {
+            InstructMacroResult::Struct(s) => s,
+            _ => panic!("Expected StructInfo"),
+        };
+
+        assert!(info_struct == desired_struct);
     }
 
     #[test]
@@ -131,8 +140,90 @@ mod tests {
             ],
         };
 
-        println!("{:?}", desired_struct);
-        println!("{:?}", info);
-        assert!(info == desired_struct);
+        let info_struct = match info {
+            InstructMacroResult::Struct(s) => s,
+            _ => panic!("Expected StructInfo"),
+        };
+        assert!(info_struct == desired_struct);
+    }
+
+    #[test]
+    fn test_single_enum() {
+        #[derive(InstructMacro, Debug)]
+        #[allow(dead_code)]
+        pub enum Status {
+            Active,
+            Inactive,
+            Pending,
+        }
+
+        let info = Status::get_info();
+
+        let desired_enum = EnumInfo {
+            title: "Status".to_string(),
+            r#enum: vec![
+                "Active".to_string(),
+                "Inactive".to_string(),
+                "Pending".to_string(),
+            ],
+            r#type: "Status".to_string(),
+            description: "".to_string(),
+        };
+
+        let info_enum = match info {
+            InstructMacroResult::Enum(e) => e,
+            _ => panic!("Expected EnumInfo"),
+        };
+
+        assert!(info_enum == desired_enum);
+    }
+
+    #[test]
+    fn test_enum_as_struct_property() {
+        #[derive(InstructMacro, Debug)]
+        #[allow(dead_code)]
+        pub enum Status {
+            Active,
+            Inactive,
+            Pending,
+        }
+
+        #[derive(InstructMacro, Debug)]
+        #[allow(dead_code)]
+        pub struct User {
+            name: String,
+            status: Status,
+        }
+
+        let info = User::get_info();
+
+        let desired_struct = StructInfo {
+            name: "User".to_string(),
+            description: "".to_string(),
+            parameters: vec![
+                Parameter::Field(ParameterInfo {
+                    name: "name".to_string(),
+                    r#type: "String".to_string(),
+                    comment: "".to_string(),
+                }),
+                Parameter::Enum(EnumInfo {
+                    title: "status".to_string(),
+                    r#enum: vec![
+                        "Active".to_string(),
+                        "Inactive".to_string(),
+                        "Pending".to_string(),
+                    ],
+                    r#type: "Status".to_string(),
+                    description: "".to_string(),
+                }),
+            ],
+        };
+
+        let info_struct = match info {
+            InstructMacroResult::Struct(s) => s,
+            _ => panic!("Expected StructInfo"),
+        };
+
+        assert!(info_struct == desired_struct);
     }
 }
