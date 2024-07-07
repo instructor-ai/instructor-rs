@@ -1,3 +1,4 @@
+use instruct_macros_types::FieldInfo;
 use quote::quote;
 use syn::{Expr, Lit};
 
@@ -20,7 +21,7 @@ fn extract_field_description(field: &syn::Field) -> String {
         .join(" ")
 }
 
-pub fn extract_parameters(fields: &syn::FieldsNamed) -> Vec<proc_macro2::TokenStream> {
+pub fn extract_parameter_information(fields: &syn::FieldsNamed) -> Vec<FieldInfo> {
     fields
         .named
         .iter()
@@ -29,10 +30,30 @@ pub fn extract_parameters(fields: &syn::FieldsNamed) -> Vec<proc_macro2::TokenSt
             let field_type = &field.ty;
             let field_comment = extract_field_description(field);
 
+            FieldInfo {
+                name: field_name
+                    .as_ref()
+                    .map_or_else(|| "Unnamed".to_string(), |ident| ident.to_string()),
+                description: field_comment,
+                r#type: quote!(#field_type).to_string(),
+                is_complex: false,
+            }
+        })
+        .collect()
+}
+
+pub fn extract_parameters(fields: &syn::FieldsNamed) -> Vec<proc_macro2::TokenStream> {
+    extract_parameter_information(fields)
+        .iter()
+        .map(|field| {
+            let field_name = &field.name;
+            let field_type = &field.r#type;
+            let field_comment = &field.description;
+
             quote! {
                 parameters.push(ParameterInfo {
-                    name: stringify!(#field_name).to_string(),
-                    r#type: stringify!(#field_type).to_string(),
+                    name: #field_name.to_string(),
+                    r#type: #field_type.to_string(),
                     comment: #field_comment.to_string(),
                 });
             }

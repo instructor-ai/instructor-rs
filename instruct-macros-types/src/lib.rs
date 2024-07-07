@@ -18,3 +18,10 @@ pub struct ParameterInfo {
     pub r#type: String,
     pub comment: String,
 }
+
+pub struct FieldInfo {
+    pub name: String,
+    pub description: String,
+    pub r#type: String,
+    pub is_complex: bool,
+}
