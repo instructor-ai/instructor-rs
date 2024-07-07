@@ -1,4 +1,7 @@
 extern crate proc_macro;
+
+mod helpers;
+
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput, Expr, ExprLit, Fields, Lit, Meta};
@@ -63,39 +66,7 @@ pub fn instruct_validate_derive(input: TokenStream) -> TokenStream {
         panic!("Only structs are supported");
     };
 
-    let parameters: Vec<_> = fields
-        .named
-        .iter()
-        .map(|field| {
-            let field_name = &field.ident;
-            let field_type = &field.ty;
-
-            let field_comment = field
-                .attrs
-                .iter()
-                .filter_map(|attr| {
-                    if attr.path().is_ident("description") {
-                        let meta = attr.parse_args().expect("Unable to parse attribute");
-                        if let Expr::Lit(expr_lit) = &meta {
-                            if let Lit::Str(lit) = &expr_lit.lit {
-                                return Some(lit.value());
-                            }
-                        }
-                    }
-                    None
-                })
-                .collect::<Vec<String>>()
-                .join(" ");
-
-            quote! {
-                parameters.push(ParameterInfo {
-                    name: stringify!(#field_name).to_string(),
-                    r#type: stringify!(#field_type).to_string(),
-                    comment: #field_comment.to_string(),
-                });
-            }
-        })
-        .collect();
+    let parameters = helpers::extract_parameters(fields);
 
     let expanded = quote! {
         impl instruct_macros_types::InstructMacro for #name {
