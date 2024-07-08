@@ -1,8 +1,8 @@
 name: Deploy
 
 on:
-  push:
-    branches:
+  create:
+    tags:
       - 'v[0-9]+\.[0-9]+\.[0-9]+'
 
 jobs:
