@@ -19,7 +19,37 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_from_openai() {
+    fn test_simple_option() {
+        let client = Client::new(env::var("OPENAI_API_KEY").unwrap().to_string());
+        let instructor_client = from_openai(client);
+
+        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        struct MaybeUser {
+            #[description(
+                "This is an optional name of a person. If no user name can be found, the field will be null"
+            )]
+            name: Option<String>,
+            error: String,
+        }
+
+        let req = ChatCompletionRequest::new(
+            GPT4_O.to_string(),
+            vec![chat_completion::ChatCompletionMessage {
+                role: chat_completion::MessageRole::user,
+                content: chat_completion::Content::Text(String::from("It's a beautiful day out")),
+                name: None,
+            }],
+        );
+
+        let result = instructor_client
+            .chat_completion::<MaybeUser>(req, 3)
+            .unwrap();
+
+        assert!(result.name.is_none());
+    }
+
+    #[test]
+    fn test_complex_option() {
         let client = Client::new(env::var("OPENAI_API_KEY").unwrap().to_string());
         let instructor_client = from_openai(client);
 
@@ -33,6 +63,7 @@ mod tests {
         struct MaybeUser {
             #[description("This is an optional user field. If the user is not present, the field will be null")]
             user: Option<UserInfo>,
+            error: String,
         }
 
         let req = ChatCompletionRequest::new(

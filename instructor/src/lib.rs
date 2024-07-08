@@ -6,7 +6,7 @@ use openai_api_rs::v1::{
     error::APIError,
 };
 
-use instruct_macros_types::{InstructMacro, InstructMacroResult, Parameter, StructInfo};
+use instruct_macros_types::{InstructMacro, InstructMacroResult, StructInfo};
 
 pub struct InstructorClient {
     client: Client,
@@ -33,6 +33,15 @@ impl InstructorClient {
         };
         let mut error_message: Option<String> = None;
 
+        // use helpers::get_response_model;
+        // use serde_json::to_string_pretty;
+
+        // // let response_model = get_response_model(parsed_model.clone());
+        // // match to_string_pretty(&response_model) {
+        // //     Ok(json) => println!("{}", json),
+        // //     Err(e) => println!("Failed to serialize response model: {}", e),
+        // // }
+
         for _ in 0..max_retries {
             let mut req = req.clone();
 
@@ -43,8 +52,6 @@ impl InstructorClient {
                     name: None,
                 };
                 req.messages.push(new_message);
-
-                println!("Error encountered: {}", error);
             }
 
             let result = self._retry_sync::<T>(req.clone(), parsed_model.clone());
@@ -107,7 +114,17 @@ impl InstructorClient {
                     1 => {
                         let tool_call = &tool_calls[0];
                         let arguments = tool_call.function.arguments.clone().unwrap();
-                        return serde_json::from_str(&arguments);
+                        match serde_json::from_str(&arguments) {
+                            Ok(value) => return Ok(value),
+                            Err(e) => {
+                                let tool_call_json = arguments.clone();
+                                let error_message = format!(
+                                    "Invalid Response from tool call: {:?}. Tool call: {}",
+                                    e, tool_call_json
+                                );
+                                return Err(serde::de::Error::custom(error_message));
+                            }
+                        }
                     }
                     _ => {
                         // TODO: Support multiple tool calls at some point
@@ -119,8 +136,7 @@ impl InstructorClient {
             }
             _ => {
                 let error_message =
-                    "You must call a tool. Make sure to adhere to the provided response format."
-                        .to_string();
+                    "Please make sure to generate a response and call a tool".to_string();
                 return Err(serde::de::Error::custom(error_message));
             }
         }
