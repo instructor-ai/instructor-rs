@@ -33,14 +33,8 @@ impl InstructorClient {
         };
         let mut error_message: Option<String> = None;
 
-        // use helpers::get_response_model;
-        // use serde_json::to_string_pretty;
-
-        // // let response_model = get_response_model(parsed_model.clone());
-        // // match to_string_pretty(&response_model) {
-        // //     Ok(json) => println!("{}", json),
-        // //     Err(e) => println!("Failed to serialize response model: {}", e),
-        // // }
+        let mut req = req.clone();
+        req.tool_choice = Some(chat_completion::ToolChoiceType::Auto);
 
         for _ in 0..max_retries {
             let mut req = req.clone();

@@ -29,7 +29,7 @@ mod tests {
                 "This is an optional name of a person. If no user name can be found, the field will be null"
             )]
             name: Option<String>,
-            error: String,
+            error_message: String,
         }
 
         let req = ChatCompletionRequest::new(
@@ -63,7 +63,7 @@ mod tests {
         struct MaybeUser {
             #[description("This is an optional user field. If the user is not present, the field will be null")]
             user: Option<UserInfo>,
-            error: String,
+            error_message: String,
         }
 
         let req = ChatCompletionRequest::new(
