@@ -1,6 +1,6 @@
 # Support for Simple Types
 
-We support most basic types out of the box with our `InstructMacro` macro now. Here's a quick rundown of how to use our macro.
+We support most basic types out of the box with our `InstructMacro` macro now. Here's a quick rundown of how to use our macro. Note that the struct name and the description you provide is fed in to the OpenAI call - what we show below is just the function parameter that we provide.
 
 ## Importing the Macro
 
