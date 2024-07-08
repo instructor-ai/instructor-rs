@@ -36,13 +36,16 @@ mod tests {
                     name: "field1".to_string(),
                     r#type: "String".to_string(),
                     comment: "This is a sample example that spans across three lines".to_string(),
+                    is_optional: false,
                 }),
                 Parameter::Field(ParameterInfo {
                     name: "field2".to_string(),
                     r#type: "str".to_string(),
                     comment: "This is a test field".to_string(),
+                    is_optional: false,
                 }),
             ],
+            is_optional: false,
         };
 
         let info_struct = match info {
@@ -117,11 +120,13 @@ mod tests {
                     name: "name".to_string(),
                     r#type: "String".to_string(),
                     comment: "".to_string(),
+                    is_optional: false,
                 }),
                 Parameter::Field(ParameterInfo {
                     name: "age".to_string(),
                     r#type: "u8".to_string(),
                     comment: "".to_string(),
+                    is_optional: false,
                 }),
                 Parameter::Struct(StructInfo {
                     name: "address".to_string(),
@@ -131,15 +136,19 @@ mod tests {
                             name: "street".to_string(),
                             r#type: "String".to_string(),
                             comment: "".to_string(),
+                            is_optional: false,
                         }),
                         Parameter::Field(ParameterInfo {
                             name: "city".to_string(),
                             r#type: "String".to_string(),
                             comment: "".to_string(),
+                            is_optional: false,
                         }),
                     ],
+                    is_optional: false,
                 }),
             ],
+            is_optional: false,
         };
 
         let info_struct = match info {
@@ -171,6 +180,7 @@ mod tests {
             ],
             r#type: "Status".to_string(),
             description: "".to_string(),
+            is_optional: false,
         };
 
         let info_enum = match info {
@@ -209,6 +219,7 @@ mod tests {
                     name: "name".to_string(),
                     r#type: "String".to_string(),
                     comment: "".to_string(),
+                    is_optional: false,
                 }),
                 Parameter::Enum(EnumInfo {
                     title: "status".to_string(),
@@ -219,8 +230,10 @@ mod tests {
                     ],
                     r#type: "Status".to_string(),
                     description: "This is an enum representing the status of a person".to_string(),
+                    is_optional: false,
                 }),
             ],
+            is_optional: false,
         };
 
         let info_struct = match info {

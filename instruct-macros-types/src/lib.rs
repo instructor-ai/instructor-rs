@@ -18,6 +18,28 @@ impl InstructMacroResult {
             InstructMacroResult::Enum(enum_info) => enum_info.wrap_info(new_name),
         }
     }
+
+    pub fn override_description(self, new_description: String) -> InstructMacroResult {
+        match self {
+            InstructMacroResult::Struct(struct_info) => {
+                InstructMacroResult::Struct(struct_info.override_description(new_description))
+            }
+            InstructMacroResult::Enum(enum_info) => {
+                InstructMacroResult::Enum(enum_info.override_description(new_description))
+            }
+        }
+    }
+
+    pub fn set_optional(self, is_optional: bool) -> InstructMacroResult {
+        match self {
+            InstructMacroResult::Struct(struct_info) => {
+                InstructMacroResult::Struct(struct_info.set_optional(is_optional))
+            }
+            InstructMacroResult::Enum(enum_info) => {
+                InstructMacroResult::Enum(enum_info.set_optional(is_optional))
+            }
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -25,12 +47,25 @@ pub struct StructInfo {
     pub name: String,
     pub description: String,
     pub parameters: Vec<Parameter>,
+    pub is_optional: bool,
 }
 
 impl StructInfo {
     pub fn wrap_info(mut self, new_name: String) -> Parameter {
         self.name = new_name;
         Parameter::Struct(self)
+    }
+
+    pub fn override_description(mut self, new_description: String) -> StructInfo {
+        if new_description.len() > 0 {
+            self.description = new_description;
+        }
+        self
+    }
+
+    pub fn set_optional(mut self, is_optional: bool) -> StructInfo {
+        self.is_optional = is_optional;
+        self
     }
 }
 
@@ -46,6 +81,7 @@ pub struct ParameterInfo {
     pub name: String,
     pub r#type: String,
     pub comment: String,
+    pub is_optional: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -54,12 +90,25 @@ pub struct EnumInfo {
     pub r#enum: Vec<String>,
     pub r#type: String,
     pub description: String,
+    pub is_optional: bool,
 }
 
 impl EnumInfo {
     pub fn wrap_info(mut self, new_name: String) -> Parameter {
         self.title = new_name;
         Parameter::Enum(self)
+    }
+
+    pub fn override_description(mut self, new_description: String) -> EnumInfo {
+        if new_description.len() > 0 {
+            self.description = new_description;
+        }
+        self
+    }
+
+    pub fn set_optional(mut self, is_optional: bool) -> EnumInfo {
+        self.is_optional = is_optional;
+        self
     }
 }
 
@@ -68,4 +117,5 @@ pub struct FieldInfo {
     pub description: String,
     pub r#type: String,
     pub is_complex: bool,
+    pub is_optional: bool,
 }
