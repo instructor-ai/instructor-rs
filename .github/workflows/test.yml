@@ -22,13 +22,18 @@ jobs:
           - instructor
     steps:
       - uses: actions/checkout@v4
-      - name: Install cargo-nextest
-        uses: baptiste0928/cargo-install@v1
+      - name: Cache cargo-nextest
+        id: cargo-nextest-cache
+        uses: actions/cache@v3
         with:
-          crate: cargo-nextest
-          locked: true
-          # Uncomment the following line if you'd like to stay on the 0.9 series
-          # version: 0.9
+          path: ~/.cargo/bin/cargo-nextest
+          key: ${{ runner.os }}-cargo-nextest-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-nextest-${{ matrix.toolchain }}-
+            ${{ runner.os }}-cargo-nextest-
+      - name: Install cargo-nextest
+        if: steps.cargo-nextest-cache.outputs.cache-hit != 'true'
+        run: cargo install cargo-nextest --locked
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
       - run: cd ${{ matrix.crate }} && cargo build --verbose
       - run: cd ${{ matrix.crate }} && cargo nextest run --verbose --retries 3
