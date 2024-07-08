@@ -2,7 +2,7 @@ extern crate instruct_macros;
 extern crate instruct_macros_types;
 
 use instruct_macros::{validate, InstructMacro};
-use instruct_macros_types::{ParameterInfo, StructInfo};
+use instruct_macros_types::{Parameter, ParameterInfo, StructInfo};
 use instructor_ai::from_openai;
 use openai_api_rs::v1::api::Client;
 
