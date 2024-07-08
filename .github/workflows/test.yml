@@ -26,8 +26,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
-        with:
-          path: ${{ matrix.crate }}
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
       - run: cd ${{ matrix.crate }} && cargo build --verbose
 
@@ -48,8 +46,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
-        with:
-          path: ${{ matrix.crate }}
       - name: Install cargo-nextest
         run: cargo install cargo-nextest --locked
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
