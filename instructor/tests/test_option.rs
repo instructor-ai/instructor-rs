@@ -48,7 +48,6 @@ mod tests {
             .chat_completion::<MaybeUser>(req, 3)
             .unwrap();
 
-        println!("{:?}", result);
-        // assert!(result.user.is_none());
+        assert!(result.user.is_none());
     }
 }
