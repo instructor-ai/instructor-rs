@@ -2,6 +2,9 @@ name: Cargo Build & Test
 
 on:
   pull_request:
+  push:
+    branches:
+      - main
 
 env:
   CARGO_TERM_COLOR: always
@@ -14,17 +17,15 @@ jobs:
       matrix:
         toolchain:
           - stable
-          # - beta
-          # - nightly
+          - beta
+          - nightly
         crate:
-          # - instruct-macros
+          - instruct-macros
           - instructor
     steps:
       - uses: actions/checkout@v4
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
-        with:
-          path: ${{ matrix.crate }}
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
       - run: cd ${{ matrix.crate }} && cargo build --verbose
 
@@ -35,18 +36,16 @@ jobs:
     strategy:
       matrix:
         toolchain:
-          # - stable
-          # - beta
+          - stable
+          - beta
           - nightly
         crate:
-          # - instruct-macros
+          - instruct-macros
           - instructor
     steps:
       - uses: actions/checkout@v4
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
-        with:
-          path: ${{ matrix.crate }}
       - name: Install cargo-nextest
         run: cargo install cargo-nextest --locked
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
