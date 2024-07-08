@@ -34,7 +34,6 @@ fn convert_parameter_type(info: &str) -> chat_completion::JSONSchemaType {
         "u8" | "i8" | "u16" | "i16" | "u32" | "i32" | "u64" | "i64" | "u128" | "i128" | "usize"
         | "isize" => chat_completion::JSONSchemaType::Number,
         "bool" => chat_completion::JSONSchemaType::Boolean,
-
         _ => panic!("Unsupported type: {}", info),
     }
 }
