@@ -207,3 +207,55 @@ struct Numbers {
 }
 */
 ```
+
+### Options
+
+We also support Option types. This is most popular when using a `Maybe` pattern where we have some form of data that we might want to extract.
+
+```rust
+#[derive(InstructMacro, Debug)]
+#[allow(dead_code)]
+#[description("This is a user struct")]
+struct User {
+    #[description("This is the user's name")]
+    pub name: String,
+    #[description("This is the user's age")]
+    pub age: i32,
+}
+
+#[derive(InstructMacro, Debug)]
+#[allow(dead_code)]
+#[description("This is a struct with Option<user> type")]
+struct MaybeUser {
+    #[description("This is an optional user field")]
+    pub user: Option<User>,
+    error_message: Option<String>
+}
+
+/*
+{
+  "type": "object",
+  "properties": {
+    "user": {
+      "type": "object",
+      "description": "This is an optional user field. If the user is not present, the field will be null",
+      "properties": {
+        "age": {
+          "type": "number",
+          "description": ""
+        },
+        "name": {
+          "type": "string",
+          "description": ""
+        }
+      }
+    },
+    "error_message": {
+      "type": "string",
+      "description": ""
+    }
+  },
+  "required": []
+}
+*/
+```
