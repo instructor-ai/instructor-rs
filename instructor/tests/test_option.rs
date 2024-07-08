@@ -70,7 +70,9 @@ mod tests {
             GPT4_O.to_string(),
             vec![chat_completion::ChatCompletionMessage {
                 role: chat_completion::MessageRole::user,
-                content: chat_completion::Content::Text(String::from("It's a beautiful day out")),
+                content: chat_completion::Content::Text(String::from(
+                    "Try to extract a user from the following sentence: `It's a beautiful day out`",
+                )),
                 name: None,
             }],
         );
