@@ -2,3 +2,6 @@
 members = ["instruct-macros-types", "instruct-macros", "instructor"]
 
 resolver = "2"
+
+[workspace.package]
+version = "0.1.8"
