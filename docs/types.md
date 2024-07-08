@@ -259,3 +259,57 @@ struct MaybeUser {
 }
 */
 ```
+
+### Nested Structs
+
+We also support Nested Structs out of the box - see example below
+
+```rust
+#[derive(InstructMacro, Debug, Serialize, Deserialize)]
+struct Address {
+    location: String,
+    distance: i32,
+}
+
+#[derive(InstructMacro, Debug, Serialize, Deserialize)]
+struct User {
+    name: String,
+    age: u8,
+    address: Address,
+}
+
+/*
+{
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "object",
+      "description": "",
+      "properties": {
+        "location": {
+          "type": "string",
+          "description": ""
+        },
+        "distance": {
+          "type": "number",
+          "description": ""
+        }
+      }
+    },
+    "name": {
+      "type": "string",
+      "description": ""
+    },
+    "age": {
+      "type": "number",
+      "description": ""
+    }
+  },
+  "required": [
+    "name",
+    "age",
+    "address"
+  ]
+}
+*/
+```
