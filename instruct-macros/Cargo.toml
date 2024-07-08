@@ -1,6 +1,6 @@
 [package]
 name = "instruct-macros"
-version = "0.1.1"
+version = "0.1.6"
 edition = "2018"
 authors = ["Ivan Leo <ivanleomk@gmail.com>"]
 description = "instruct-macros are a collection of simple macros that we're using in Instructor-AI to generate json schema from Serde Objects"
