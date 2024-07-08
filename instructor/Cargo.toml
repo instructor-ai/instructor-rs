@@ -1,6 +1,6 @@
 [package]
 name = "instructor-ai"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2021"
 authors = ["Ivan Leo <ivanleomk@gmail.com>"]
 description = "instructor-ai is a simple crate that allows for users to do validated structured outputs"
