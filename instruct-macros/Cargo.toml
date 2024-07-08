@@ -17,7 +17,7 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-instruct-macros-types = { path = "../instruct-macros-types", version = "0.1.0" }
+instruct-macros-types = { path = "../instruct-macros-types", version = "0.*" }
 proc-macro2 = "1.0.86"
 
 [dependencies.syn]

@@ -2,8 +2,8 @@ name: Deploy
 
 on:
   push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+    branches:
+      - 'v[0-9]+\.[0-9]+\.[0-9]+'
 
 jobs:
   build-and-upload:
@@ -12,15 +12,10 @@ jobs:
 
     strategy:
       matrix:
-        # You can add more, for any target you'd like!
         include:
           - build: linux
             os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-
-          - build: macos
-            os: macos-latest
-            target: x86_64-apple-darwin
 
     steps:
       - name: Checkout
@@ -40,6 +35,9 @@ jobs:
       - name: Install Rust
         run: rustup target add ${{ matrix.target }}
 
-      - name: Publish to Cargo
-        run: |
-          cargo workspaces publish --verbose --allow-branch * --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Bump version to the tag
+        run: cargo workspaces version $VERSION --all --no-git-push --no-git-tag --yes
+
+      - uses: katyo/publish-crates@v2
+        with:
+          registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
