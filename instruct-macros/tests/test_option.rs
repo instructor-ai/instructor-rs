@@ -26,18 +26,21 @@ mod tests {
             name: "TestOptionStruct".to_string(),
             description: "This is a struct with Option types".to_string(),
             is_optional: false,
+            is_list: false,
             parameters: vec![
                 Parameter::Field(ParameterInfo {
                     name: "field1".to_string(),
                     r#type: "Option<String>".to_string(),
                     comment: "This is an optional string field".to_string(),
                     is_optional: true,
+                    is_list: false,
                 }),
                 Parameter::Field(ParameterInfo {
                     name: "field2".to_string(),
                     r#type: "Option<i32>".to_string(),
                     comment: "This is an optional integer field".to_string(),
                     is_optional: true,
+                    is_list: false,
                 }),
             ],
         };
@@ -83,17 +86,21 @@ mod tests {
                         r#type: "String".to_string(),
                         comment: "This is the user's name".to_string(),
                         is_optional: false,
+                        is_list: false,
                     }),
                     Parameter::Field(ParameterInfo {
                         name: "age".to_string(),
                         r#type: "i32".to_string(),
                         comment: "This is the user's age".to_string(),
                         is_optional: false,
+                        is_list: false,
                     }),
                 ],
                 is_optional: true,
+                is_list: false,
             })],
             is_optional: false,
+            is_list: false,
         };
 
         let info_struct = match info {

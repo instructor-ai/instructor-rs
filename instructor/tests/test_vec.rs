@@ -12,58 +12,57 @@ mod tests {
 
     use openai_api_rs::v1::{
         chat_completion::{self, ChatCompletionRequest},
-        common::GPT4_O,
+        common::{GPT4, GPT4_O},
     };
     use serde::{Deserialize, Serialize};
 
     use super::*;
 
     #[test]
-    fn test_simple_option() {
+    fn test_simple_vec() {
         let client = Client::new(env::var("OPENAI_API_KEY").unwrap().to_string());
         let instructor_client = from_openai(client);
 
         #[derive(InstructMacro, Debug, Serialize, Deserialize)]
-        struct MaybeUser {
-            #[description(
-                "This is an optional name of a person. If no user name can be found, the field will be null"
-            )]
-            name: Option<String>,
-            error_message: String,
+        struct UserIds {
+            #[description("This is a list of user ids that we extracted from the message")]
+            user_ids: Vec<String>,
         }
 
         let req = ChatCompletionRequest::new(
-            GPT4_O.to_string(),
+            GPT4.to_string(),
             vec![chat_completion::ChatCompletionMessage {
                 role: chat_completion::MessageRole::user,
-                content: chat_completion::Content::Text(String::from("It's a beautiful day out")),
+                content: chat_completion::Content::Text(String::from(
+                    "User IDs are 12, 13, 14, 15,24",
+                )),
                 name: None,
             }],
         );
 
         let result = instructor_client
-            .chat_completion::<MaybeUser>(req, 3)
+            .chat_completion::<UserIds>(req, 3)
             .unwrap();
 
-        assert!(result.name.is_none());
+        assert_eq!(result.user_ids, vec!["12", "13", "14", "15", "24"]);
     }
 
     #[test]
-    fn test_complex_option() {
+    fn test_complex_vec() {
         let client = Client::new(env::var("OPENAI_API_KEY").unwrap().to_string());
         let instructor_client = from_openai(client);
 
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
-        struct UserInfo {
+        #[derive(InstructMacro, Debug, Serialize, Deserialize, PartialEq)]
+        #[description("This is a user that we extracted from the text")]
+        struct User {
             name: String,
-            age: u8,
+            age: String,
         }
 
         #[derive(InstructMacro, Debug, Serialize, Deserialize)]
-        struct MaybeUser {
-            #[description("This is an optional user field. If the user is not present, the field will be null")]
-            user: Option<UserInfo>,
-            error_message: String,
+        #[description("Users that are present in the sentence provided")]
+        struct Users {
+            users: Vec<User>,
         }
 
         let req = ChatCompletionRequest::new(
@@ -71,16 +70,25 @@ mod tests {
             vec![chat_completion::ChatCompletionMessage {
                 role: chat_completion::MessageRole::user,
                 content: chat_completion::Content::Text(String::from(
-                    "Try to extract a user from the following sentence: `It's a beautiful day out`",
+                    "Jason is 20, Sarah is 30, and John is 40",
                 )),
                 name: None,
             }],
         );
 
-        let result = instructor_client
-            .chat_completion::<MaybeUser>(req, 3)
-            .unwrap();
+        let result = instructor_client.chat_completion::<Users>(req, 3).unwrap();
 
-        assert!(result.user.is_none());
+        assert!(result.users.contains(&User {
+            name: "Jason".to_string(),
+            age: "20".to_string()
+        }));
+        assert!(result.users.contains(&User {
+            name: "Sarah".to_string(),
+            age: "30".to_string()
+        }));
+        assert!(result.users.contains(&User {
+            name: "John".to_string(),
+            age: "40".to_string()
+        }));
     }
 }

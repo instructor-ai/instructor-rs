@@ -40,6 +40,17 @@ impl InstructMacroResult {
             }
         }
     }
+
+    pub fn set_list(self, is_list: bool) -> InstructMacroResult {
+        match self {
+            InstructMacroResult::Struct(struct_info) => {
+                InstructMacroResult::Struct(struct_info.set_list(is_list))
+            }
+            InstructMacroResult::Enum(enum_info) => {
+                InstructMacroResult::Enum(enum_info.set_list(is_list))
+            }
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -48,6 +59,7 @@ pub struct StructInfo {
     pub description: String,
     pub parameters: Vec<Parameter>,
     pub is_optional: bool,
+    pub is_list: bool,
 }
 
 impl StructInfo {
@@ -67,6 +79,11 @@ impl StructInfo {
         self.is_optional = is_optional;
         self
     }
+
+    pub fn set_list(mut self, is_list: bool) -> StructInfo {
+        self.is_list = is_list;
+        self
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -82,6 +99,7 @@ pub struct ParameterInfo {
     pub r#type: String,
     pub comment: String,
     pub is_optional: bool,
+    pub is_list: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -91,6 +109,7 @@ pub struct EnumInfo {
     pub r#type: String,
     pub description: String,
     pub is_optional: bool,
+    pub is_list: bool,
 }
 
 impl EnumInfo {
@@ -110,6 +129,11 @@ impl EnumInfo {
         self.is_optional = is_optional;
         self
     }
+
+    pub fn set_list(mut self, is_list: bool) -> EnumInfo {
+        self.is_list = is_list;
+        self
+    }
 }
 
 pub struct FieldInfo {
@@ -118,4 +142,5 @@ pub struct FieldInfo {
     pub r#type: String,
     pub is_complex: bool,
     pub is_optional: bool,
+    pub is_list: bool,
 }

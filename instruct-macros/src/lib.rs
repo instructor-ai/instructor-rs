@@ -40,7 +40,8 @@ fn generate_instruct_macro_enum(input: &DeriveInput) -> proc_macro2::TokenStream
             r#enum: vec![#(#enum_variants.to_string()),*],
             r#type: stringify!(#name).to_string(),
             description: #description.to_string(),
-            is_optional:false
+            is_optional:false,
+            is_list: false
         })
     };
 
@@ -122,7 +123,8 @@ fn generate_instruct_macro_struct(input: &DeriveInput) -> proc_macro2::TokenStre
                     name: stringify!(#name).to_string(),
                     description: #description.to_string(),
                     parameters,
-                    is_optional:false
+                    is_optional:false,
+                    is_list: false,
                 })
             }
 

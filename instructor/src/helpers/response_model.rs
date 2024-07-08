@@ -34,7 +34,6 @@ fn convert_parameter_type(info: &str) -> chat_completion::JSONSchemaType {
         "u8" | "i8" | "u16" | "i16" | "u32" | "i32" | "u64" | "i64" | "u128" | "i128" | "usize"
         | "isize" => chat_completion::JSONSchemaType::Number,
         "bool" => chat_completion::JSONSchemaType::Boolean,
-
         _ => panic!("Unsupported type: {}", info),
     }
 }
@@ -57,13 +56,27 @@ fn get_response_model_parameters(t: &StructInfo) -> HashMap<String, Box<JSONSche
                 let parameter_description = field_info.comment.clone();
 
                 let base_type = get_base_type(field_info);
-                let parameter_type = convert_parameter_type(&base_type.to_string());
+                let parameter_type = if field_info.is_list {
+                    chat_completion::JSONSchemaType::Array
+                } else {
+                    convert_parameter_type(&base_type.to_string())
+                };
+
+                let items = if field_info.is_list {
+                    Some(Box::new(chat_completion::JSONSchemaDefine {
+                        schema_type: Some(convert_parameter_type(base_type)),
+                        ..Default::default()
+                    }))
+                } else {
+                    None
+                };
 
                 properties.insert(
                     parameter_name,
                     Box::new(chat_completion::JSONSchemaDefine {
                         schema_type: Some(parameter_type),
                         description: Some(parameter_description),
+                        items: items,
                         ..Default::default()
                     }),
                 );
@@ -73,12 +86,33 @@ fn get_response_model_parameters(t: &StructInfo) -> HashMap<String, Box<JSONSche
                 let parameter_description = enum_info.description.clone();
                 let enum_values: Vec<String> = enum_info.r#enum.iter().map(|e| e.clone()).collect();
 
+                let parameter_type = if enum_info.is_list {
+                    chat_completion::JSONSchemaType::Array
+                } else {
+                    chat_completion::JSONSchemaType::String
+                };
+
+                let items = if enum_info.is_list {
+                    Some(Box::new(chat_completion::JSONSchemaDefine {
+                        schema_type: Some(chat_completion::JSONSchemaType::String),
+                        enum_values: Some(enum_values.clone()),
+                        ..Default::default()
+                    }))
+                } else {
+                    None
+                };
+
                 properties.insert(
                     parameter_name,
                     Box::new(chat_completion::JSONSchemaDefine {
-                        schema_type: Some(chat_completion::JSONSchemaType::String),
+                        schema_type: Some(parameter_type),
                         description: Some(parameter_description),
-                        enum_values: Some(enum_values),
+                        items: items,
+                        enum_values: if enum_info.is_list {
+                            None
+                        } else {
+                            Some(enum_values.clone()) // Clone here to avoid move error
+                        },
                         ..Default::default()
                     }),
                 );
@@ -87,12 +121,35 @@ fn get_response_model_parameters(t: &StructInfo) -> HashMap<String, Box<JSONSche
                 let parameter_name = struct_info.name.clone();
                 let parameter_description = struct_info.description.clone();
 
+                let parameter_type = if struct_info.is_list {
+                    chat_completion::JSONSchemaType::Array
+                } else {
+                    chat_completion::JSONSchemaType::Object
+                };
+
+                let items = if struct_info.is_list {
+                    Some(Box::new(chat_completion::JSONSchemaDefine {
+                        schema_type: Some(chat_completion::JSONSchemaType::Object),
+                        properties: Some(get_response_model_parameters(struct_info)),
+                        ..Default::default()
+                    }))
+                } else {
+                    None
+                };
+
+                let struct_properties = if struct_info.is_list {
+                    None
+                } else {
+                    Some(get_response_model_parameters(struct_info))
+                };
+
                 properties.insert(
                     parameter_name,
                     Box::new(chat_completion::JSONSchemaDefine {
-                        schema_type: Some(chat_completion::JSONSchemaType::Object),
+                        schema_type: Some(parameter_type),
                         description: Some(parameter_description),
-                        properties: Some(get_response_model_parameters(struct_info)),
+                        items,
+                        properties: struct_properties,
                         ..Default::default()
                     }),
                 );
@@ -453,6 +510,167 @@ mod tests {
                 props
             }),
             required: Some(vec![]), // No required fields
+        };
+
+        assert_eq!(expected_parameters, parameters);
+    }
+
+    #[test]
+    fn test_struct_with_vec_of_i32() {
+        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        struct Numbers {
+            #[description("A list of numbers")]
+            numbers: Vec<i32>,
+        }
+
+        let struct_info = Numbers::get_info();
+        let parsed_model: StructInfo = match struct_info {
+            InstructMacroResult::Struct(info) => info,
+            _ => {
+                panic!("Expected StructInfo but got a different InstructMacroResult variant");
+            }
+        };
+        let parameters = get_response_model(parsed_model);
+
+        let expected_parameters = chat_completion::FunctionParameters {
+            schema_type: chat_completion::JSONSchemaType::Object,
+            properties: Some({
+                let mut props = std::collections::HashMap::new();
+                props.insert(
+                    "numbers".to_string(),
+                    Box::new(chat_completion::JSONSchemaDefine {
+                        schema_type: Some(chat_completion::JSONSchemaType::Array),
+                        description: Some("A list of numbers".to_string()),
+                        items: Some(Box::new(chat_completion::JSONSchemaDefine {
+                            schema_type: Some(chat_completion::JSONSchemaType::Number),
+                            ..Default::default()
+                        })),
+                        ..Default::default()
+                    }),
+                );
+                props
+            }),
+            required: Some(vec!["numbers".to_string()]), // "numbers" is a required field
+        };
+
+        assert_eq!(expected_parameters, parameters);
+    }
+
+    #[test]
+    fn test_struct_with_vec_of_users() {
+        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        struct User {
+            name: String,
+        }
+        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        struct Users {
+            #[description("A list of users")]
+            users: Vec<User>,
+        }
+
+        let struct_info = Users::get_info();
+        let parsed_model: StructInfo = match struct_info {
+            InstructMacroResult::Struct(info) => info,
+            _ => {
+                panic!("Expected StructInfo but got a different InstructMacroResult variant");
+            }
+        };
+        let parameters = get_response_model(parsed_model);
+
+        let expected_parameters = chat_completion::FunctionParameters {
+            schema_type: chat_completion::JSONSchemaType::Object,
+            properties: Some({
+                let mut props = std::collections::HashMap::new();
+                props.insert(
+                    "users".to_string(),
+                    Box::new(chat_completion::JSONSchemaDefine {
+                        schema_type: Some(chat_completion::JSONSchemaType::Array),
+                        description: Some("A list of users".to_string()),
+                        required: None,
+                        items: Some(Box::new(chat_completion::JSONSchemaDefine {
+                            schema_type: Some(chat_completion::JSONSchemaType::Object),
+                            properties: Some({
+                                let mut user_props = std::collections::HashMap::new();
+                                user_props.insert(
+                                    "name".to_string(),
+                                    Box::new(chat_completion::JSONSchemaDefine {
+                                        schema_type: Some(chat_completion::JSONSchemaType::String),
+                                        description: Some("".to_string()),
+                                        ..Default::default()
+                                    }),
+                                );
+                                user_props
+                            }),
+                            ..Default::default()
+                        })),
+                        ..Default::default()
+                    }),
+                );
+                props
+            }),
+            required: Some(vec!["users".to_string()]), // "users" is a required field
+        };
+        assert_eq!(expected_parameters, parameters);
+    }
+
+    #[test]
+    fn test_struct_with_vec_of_enums() {
+        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        enum Job {
+            Developer,
+            Teacher,
+            Artist,
+        }
+
+        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        struct Person {
+            #[description("The name of the person")]
+            name: String,
+            #[description("The jobs of the person")]
+            jobs: Vec<Job>,
+        }
+
+        let struct_info = Person::get_info();
+        let parsed_model: StructInfo = match struct_info {
+            InstructMacroResult::Struct(info) => info,
+            _ => {
+                panic!("Expected StructInfo but got a different InstructMacroResult variant");
+            }
+        };
+        let parameters = get_response_model(parsed_model);
+
+        let expected_parameters = chat_completion::FunctionParameters {
+            schema_type: chat_completion::JSONSchemaType::Object,
+            properties: Some({
+                let mut props = std::collections::HashMap::new();
+                props.insert(
+                    "name".to_string(),
+                    Box::new(chat_completion::JSONSchemaDefine {
+                        schema_type: Some(chat_completion::JSONSchemaType::String),
+                        description: Some("The name of the person".to_string()),
+                        ..Default::default()
+                    }),
+                );
+                props.insert(
+                    "jobs".to_string(),
+                    Box::new(chat_completion::JSONSchemaDefine {
+                        schema_type: Some(chat_completion::JSONSchemaType::Array),
+                        description: Some("The jobs of the person".to_string()),
+                        items: Some(Box::new(chat_completion::JSONSchemaDefine {
+                            schema_type: Some(chat_completion::JSONSchemaType::String),
+                            enum_values: Some(vec![
+                                "Developer".to_string(),
+                                "Teacher".to_string(),
+                                "Artist".to_string(),
+                            ]),
+                            ..Default::default()
+                        })),
+                        ..Default::default()
+                    }),
+                );
+                props
+            }),
+            required: Some(vec!["name".to_string(), "jobs".to_string()]),
         };
 
         assert_eq!(expected_parameters, parameters);

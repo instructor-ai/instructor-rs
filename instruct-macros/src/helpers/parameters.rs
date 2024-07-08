@@ -32,7 +32,9 @@ pub fn extract_parameter_information(fields: &syn::FieldsNamed) -> Vec<FieldInfo
             let field_type = &field.ty;
             let serialized_field_type = quote!(#field_type).to_string();
 
-            let serialized_field_type = if serialized_field_type.contains("Option <") {
+            let serialized_field_type = if serialized_field_type.contains("Option <")
+                || serialized_field_type.contains("Vec <")
+            {
                 serialized_field_type.replace(" ", "")
             } else {
                 serialized_field_type
@@ -46,9 +48,14 @@ pub fn extract_parameter_information(fields: &syn::FieldsNamed) -> Vec<FieldInfo
                 r#type: serialized_field_type.clone(),
                 is_complex: is_complex_type(serialized_field_type.clone()),
                 is_optional: is_option_type(&serialized_field_type),
+                is_list: is_list_type(serialized_field_type.clone()),
             }
         })
         .collect()
+}
+
+fn is_list_type(field_type: String) -> bool {
+    field_type.starts_with("Vec<") && field_type.ends_with(">")
 }
 
 pub fn is_complex_type(field_type: String) -> bool {
@@ -62,11 +69,20 @@ pub fn is_complex_type(field_type: String) -> bool {
         .map(|&t| format!("Option<{}>", t))
         .collect();
 
+    let vec_types: Vec<String> = simple_types
+        .iter()
+        .map(|&t| format!("Vec<{}>", t))
+        .collect();
+
     if simple_types.contains(&field_type.as_str()) {
         return false;
     }
 
     if option_types.contains(&field_type) {
+        return false;
+    }
+
+    if vec_types.contains(&field_type) {
         return false;
     }
 
@@ -93,14 +109,25 @@ pub fn extract_parameters(fields: &syn::FieldsNamed) -> Vec<proc_macro2::TokenSt
             let field_type = &field.r#type;
             let field_comment = &field.description;
             let is_option = is_option_type(field_type);
+            let is_list = field.is_list;
+
+            
 
             if !field.is_complex {
+
+                let field_type = if is_list {
+                    extract_nested_type(&field_type[4..field_type.len() - 1])
+                } else {
+                    field_type.to_string()
+                };
+
                 quote! {
                     parameters.push(Parameter::Field(ParameterInfo {
                         name: #field_name.to_string(),
                         r#type: #field_type.to_string(),
                         comment: #field_comment.to_string(),
                         is_optional: #is_option,
+                        is_list: #is_list,
                     }));
                 }
             } else if is_option_type(field_type) {
@@ -111,10 +138,20 @@ pub fn extract_parameters(fields: &syn::FieldsNamed) -> Vec<proc_macro2::TokenSt
                     parameters.push(#field_type::get_info().override_description(#field_comment.to_string()).set_optional(#is_option).wrap_info(#field_name.to_string()));
                 }
             } else {
-                let field_type = Ident::new(&field_type, proc_macro2::Span::call_site()); // Convert string to an identifier
+                let is_list = field.is_list;
+                
 
+                let field_type = if is_list {
+                    extract_nested_type(&field_type[4..field_type.len() - 1])
+                } else {
+                    field_type.to_string()
+                };
+
+                let field_type = Ident::new(&field_type, proc_macro2::Span::call_site()); // Convert string to an identifier
+                
+                
                 quote! {
-                    parameters.push(#field_type::get_info().override_description(#field_comment.to_string()).set_optional(#is_option).wrap_info(#field_name.to_string()));
+                    parameters.push(#field_type::get_info().override_description(#field_comment.to_string()).set_optional(#is_option).set_list(#is_list).wrap_info(#field_name.to_string()));
                 }
             }
         })
