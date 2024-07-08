@@ -92,8 +92,6 @@ impl InstructorClient {
             },
         };
 
-        let parameters_json = serde_json::to_string(&func_call.function).unwrap();
-
         let req = req
             .tools(vec![func_call])
             .tool_choice(chat_completion::ToolChoiceType::Auto);
