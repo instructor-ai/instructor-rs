@@ -16,7 +16,7 @@ mod tests {
     fn test_string_conversion() {
         #[derive(InstructMacro, Debug)]
         #[allow(dead_code)]
-        // This is a struct
+        #[description("This is a struct")]
         struct TestStruct {
             #[description(
                 "This is a sample example \
@@ -30,7 +30,7 @@ mod tests {
         let info = TestStruct::get_info();
         let desired_struct = StructInfo {
             name: "TestStruct".to_string(),
-            description: "".to_string(),
+            description: "This is a struct".to_string(),
             parameters: vec![
                 Parameter::Field(ParameterInfo {
                     name: "field1".to_string(),
@@ -50,6 +50,8 @@ mod tests {
             _ => panic!("Expected StructInfo"),
         };
 
+        println!("info_struct: {:?}", info_struct);
+        println!("desired_struct: {:?}", desired_struct);
         assert!(info_struct == desired_struct);
     }
 
@@ -151,6 +153,7 @@ mod tests {
     fn test_single_enum() {
         #[derive(InstructMacro, Debug)]
         #[allow(dead_code)]
+        #[description = "This is an enum representing the status of a person"]
         pub enum Status {
             Active,
             Inactive,
@@ -182,6 +185,7 @@ mod tests {
     fn test_enum_as_struct_property() {
         #[derive(InstructMacro, Debug)]
         #[allow(dead_code)]
+        #[description("This is an enum representing the status of a person")]
         pub enum Status {
             Active,
             Inactive,
@@ -214,7 +218,7 @@ mod tests {
                         "Pending".to_string(),
                     ],
                     r#type: "Status".to_string(),
-                    description: "".to_string(),
+                    description: "This is an enum representing the status of a person".to_string(),
                 }),
             ],
         };
@@ -223,6 +227,9 @@ mod tests {
             InstructMacroResult::Struct(s) => s,
             _ => panic!("Expected StructInfo"),
         };
+
+        println!("info_struct: {:?}", info_struct);
+        println!("desired_struct: {:?}", desired_struct);
 
         assert!(info_struct == desired_struct);
     }

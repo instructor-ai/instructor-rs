@@ -4,7 +4,7 @@ mod helpers;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Data, DeriveInput, Expr, ExprLit, Fields, Lit, Meta};
+use syn::{parse_macro_input, Attribute, Data, DeriveInput, Expr, ExprLit, Fields, Lit, Meta};
 
 #[proc_macro_derive(InstructMacro, attributes(validate, description))]
 pub fn instruct_validate_derive(input: TokenStream) -> TokenStream {
@@ -31,12 +31,15 @@ fn generate_instruct_macro_enum(input: &DeriveInput) -> proc_macro2::TokenStream
 
     let enum_variants: Vec<String> = variants.iter().map(|v| v.ident.to_string()).collect();
 
+    // Extract struct-level comment
+    let description = extract_attribute_value(&input.attrs, "description");
+
     let enum_info = quote! {
         instruct_macros_types::InstructMacroResult::Enum(instruct_macros_types::EnumInfo {
             title: stringify!(#name).to_string(),
             r#enum: vec![#(#enum_variants.to_string()),*],
             r#type: stringify!(#name).to_string(),
-            description: "".to_string(),
+            description: #description.to_string(),
         })
     };
 
@@ -54,8 +57,24 @@ fn generate_instruct_macro_enum(input: &DeriveInput) -> proc_macro2::TokenStream
     }
 }
 
+fn extract_attribute_value(attrs: &[Attribute], attr_name: &str) -> String {
+    attrs
+        .iter()
+        .filter_map(|attr| {
+            if attr.path().is_ident(attr_name) {
+                attr.parse_args::<syn::LitStr>().ok().map(|lit| lit.value())
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<String>>()
+        .join(" ")
+}
+
 fn generate_instruct_macro_struct(input: &DeriveInput) -> proc_macro2::TokenStream {
     let name = &input.ident;
+
+    let description = extract_attribute_value(&input.attrs, "description");
 
     let fields = match &input.data {
         Data::Struct(data) => match &data.fields {
@@ -119,7 +138,7 @@ fn generate_instruct_macro_struct(input: &DeriveInput) -> proc_macro2::TokenStre
 
                 instruct_macros_types::InstructMacroResult::Struct(StructInfo {
                     name: stringify!(#name).to_string(),
-                    description: #struct_comment.to_string(),
+                    description: #description.to_string(),
                     parameters,
                 })
             }
