@@ -22,8 +22,15 @@ jobs:
           - instructor
     steps:
       - uses: actions/checkout@v4
+      - name: Install cargo-nextest
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: cargo-nextest
+          locked: true
+          # Uncomment the following line if you'd like to stay on the 0.9 series
+          # version: 0.9
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
       - run: cd ${{ matrix.crate }} && cargo build --verbose
-      - run: cd ${{ matrix.crate }} && cargo test --verbose
+      - run: cd ${{ matrix.crate }} && cargo nextest run --verbose --retries 3
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
