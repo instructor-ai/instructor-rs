@@ -6,7 +6,7 @@ use openai_api_rs::v1::{
     error::APIError,
 };
 
-use instruct_macros_types::{InstructMacro, InstructMacroResult, StructInfo};
+use instruct_macros_types::{InstructMacro, InstructMacroResult, Parameter, StructInfo};
 
 pub struct InstructorClient {
     client: Client,
@@ -43,9 +43,12 @@ impl InstructorClient {
                     name: None,
                 };
                 req.messages.push(new_message);
+
+                println!("Error encountered: {}", error);
             }
 
             let result = self._retry_sync::<T>(req.clone(), parsed_model.clone());
+
             match result {
                 Ok(value) => {
                     match T::validate(&value) {
@@ -85,9 +88,11 @@ impl InstructorClient {
             function: chat_completion::Function {
                 name: parsed_model.name.clone(),
                 description: Some(parsed_model.description.clone()),
-                parameters: helpers::get_response_model(parsed_model),
+                parameters: helpers::get_response_model(parsed_model.clone()),
             },
         };
+
+        let parameters_json = serde_json::to_string(&func_call.function).unwrap();
 
         let req = req
             .tools(vec![func_call])
@@ -104,18 +109,22 @@ impl InstructorClient {
                     1 => {
                         let tool_call = &tool_calls[0];
                         let arguments = tool_call.function.arguments.clone().unwrap();
-
                         return serde_json::from_str(&arguments);
                     }
                     _ => {
                         // TODO: Support multiple tool calls at some point
                         let error_message =
-                            format!("Unexpected number of tool calls: {:?}", tool_calls);
+                            format!("Unexpected number of tool calls: {:?}. PLease only generate a single tool call.", tool_calls);
                         return Err(serde::de::Error::custom(error_message));
                     }
                 }
             }
-            _ => panic!("Unexpected finish reason"),
+            _ => {
+                let error_message =
+                    "You must call a tool. Make sure to adhere to the provided response format."
+                        .to_string();
+                return Err(serde::de::Error::custom(error_message));
+            }
         }
     }
 }
