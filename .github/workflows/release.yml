@@ -3,7 +3,7 @@ name: Deploy
 on:
   push:
     branches:
-      - add-release-ci
+      - 'v[0-9]+\.[0-9]+\.[0-9]+'
 
 jobs:
   build-and-upload:
@@ -34,6 +34,9 @@ jobs:
 
       - name: Install Rust
         run: rustup target add ${{ matrix.target }}
+
+      - name: Bump version to the tag
+        run: cargo workspaces version $VERSION --all --no-git-push --no-git-tag --yes
 
       - uses: katyo/publish-crates@v2
         with:
