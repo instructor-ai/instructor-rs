@@ -98,25 +98,6 @@ fn generate_instruct_macro_struct(input: &DeriveInput) -> proc_macro2::TokenStre
         })
         .collect();
 
-    // Extract struct-level comment
-    let struct_comment = input
-        .attrs
-        .iter()
-        .filter_map(|attr| {
-            if attr.path().is_ident("doc") {
-                if let Ok(Meta::NameValue(meta)) = attr.parse_args::<Meta>() {
-                    if let Expr::Lit(expr_lit) = &meta.value {
-                        if let Lit::Str(lit) = &expr_lit.lit {
-                            return Some(lit.value());
-                        }
-                    }
-                }
-            }
-            None
-        })
-        .collect::<Vec<String>>()
-        .join(" ");
-
     // Process each field in the struct
     let fields = if let Data::Struct(data) = &input.data {
         if let Fields::Named(fields) = &data.fields {

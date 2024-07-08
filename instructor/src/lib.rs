@@ -1,13 +1,12 @@
-use instruct_macros_types::InstructMacro;
-use std::{collections::HashMap, vec};
-
+use std::vec;
+mod helpers;
 use openai_api_rs::v1::{
     api::Client,
-    chat_completion::{self, ChatCompletionRequest, JSONSchemaDefine},
+    chat_completion::{self, ChatCompletionRequest},
     error::APIError,
 };
 
-use instruct_macros_types::{ParameterInfo, StructInfo};
+use instruct_macros_types::{InstructMacro, InstructMacroResult, StructInfo};
 
 pub struct InstructorClient {
     client: Client,
@@ -18,36 +17,6 @@ impl InstructorClient {
         Self { client }
     }
 
-    fn get_parameters<T>(parameters: Vec<ParameterInfo>) -> HashMap<String, Box<JSONSchemaDefine>>
-    where
-        T: for<'de> serde::Deserialize<'de>,
-    {
-        let mut properties = HashMap::new();
-
-        for param in parameters {
-            let schema_type = match param.r#type.as_str() {
-                "String" => Some(chat_completion::JSONSchemaType::String),
-                "u8" => Some(chat_completion::JSONSchemaType::Number),
-                _ => None,
-            };
-
-            properties.insert(
-                param.name.clone(),
-                Box::new(chat_completion::JSONSchemaDefine {
-                    schema_type,
-                    description: Some(param.comment.clone()),
-                    ..Default::default()
-                }),
-            );
-        }
-
-        properties
-    }
-
-    fn get_required(parameters: Vec<ParameterInfo>) -> Vec<String> {
-        parameters.iter().map(|p| p.name.clone()).collect()
-    }
-
     pub fn chat_completion<T>(
         &self,
         req: ChatCompletionRequest,
@@ -56,7 +25,12 @@ impl InstructorClient {
     where
         T: InstructMacro + for<'de> serde::Deserialize<'de>,
     {
-        let parsed_model: StructInfo = T::get_info();
+        let parsed_model: StructInfo = match T::get_info() {
+            InstructMacroResult::Struct(info) => info,
+            _ => {
+                panic!("Expected StructInfo but got a different InstructMacroResult variant");
+            }
+        };
         let mut error_message: Option<String> = None;
 
         for _ in 0..max_retries {
@@ -106,18 +80,12 @@ impl InstructorClient {
     where
         T: InstructMacro + for<'de> serde::Deserialize<'de>,
     {
-        let properties = Self::get_parameters::<T>(parsed_model.parameters.clone());
-
         let func_call = chat_completion::Tool {
             r#type: chat_completion::ToolType::Function,
             function: chat_completion::Function {
-                name: parsed_model.name,
-                description: Some(parsed_model.description),
-                parameters: chat_completion::FunctionParameters {
-                    schema_type: chat_completion::JSONSchemaType::Object,
-                    properties: Some(properties),
-                    required: Some(Self::get_required(parsed_model.parameters.clone())),
-                },
+                name: parsed_model.name.clone(),
+                description: Some(parsed_model.description.clone()),
+                parameters: helpers::get_response_model(parsed_model),
             },
         };
 
