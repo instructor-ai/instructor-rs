@@ -1,20 +1,27 @@
 use std::collections::HashMap;
 
-use instruct_macros_types::{Parameter, StructInfo};
+use instruct_macros_types::{Parameter, ParameterInfo, StructInfo};
 use openai_api_rs::v1::chat_completion::{self, JSONSchemaDefine};
 
 fn get_required_properties(info: &StructInfo) -> Vec<String> {
     let mut required = Vec::new();
+
     for param in info.parameters.iter() {
         match param {
             Parameter::Field(field_info) => {
-                required.push(field_info.name.clone());
+                if !field_info.is_optional {
+                    required.push(field_info.name.clone());
+                }
             }
             Parameter::Struct(struct_info) => {
-                required.push(struct_info.name.clone());
+                if !struct_info.is_optional {
+                    required.push(struct_info.name.clone());
+                }
             }
             Parameter::Enum(enum_info) => {
-                required.push(enum_info.title.clone());
+                if !enum_info.is_optional {
+                    required.push(enum_info.title.clone());
+                }
             }
         }
     }
@@ -27,7 +34,16 @@ fn convert_parameter_type(info: &str) -> chat_completion::JSONSchemaType {
         "u8" | "i8" | "u16" | "i16" | "u32" | "i32" | "u64" | "i64" | "u128" | "i128" | "usize"
         | "isize" => chat_completion::JSONSchemaType::Number,
         "bool" => chat_completion::JSONSchemaType::Boolean,
+
         _ => panic!("Unsupported type: {}", info),
+    }
+}
+
+fn get_base_type(field_info: &ParameterInfo) -> &str {
+    if field_info.r#type.starts_with("Option<") && field_info.r#type.ends_with('>') {
+        &field_info.r#type[7..field_info.r#type.len() - 1]
+    } else {
+        &field_info.r#type
     }
 }
 
@@ -40,7 +56,8 @@ fn get_response_model_parameters(t: &StructInfo) -> HashMap<String, Box<JSONSche
                 let parameter_name = field_info.name.clone();
                 let parameter_description = field_info.comment.clone();
 
-                let parameter_type = convert_parameter_type(&field_info.r#type.to_string());
+                let base_type = get_base_type(field_info);
+                let parameter_type = convert_parameter_type(&base_type.to_string());
 
                 properties.insert(
                     parameter_name,
@@ -282,10 +299,6 @@ mod tests {
             ]),
         };
 
-        if expected_parameters != parameters {
-            println!("Expected Parameters: {:?}", expected_parameters);
-            println!("Actual Parameters: {:?}", parameters);
-        }
         assert_eq!(expected_parameters, parameters);
     }
 
@@ -333,10 +346,115 @@ mod tests {
             required: Some(vec!["name".to_string(), "age".to_string()]),
         };
 
-        if expected_parameters != parameters {
-            println!("Expected Parameters: {:?}", expected_parameters);
-            println!("Actual Parameters: {:?}", parameters);
+        assert_eq!(expected_parameters, parameters);
+    }
+
+    #[test]
+    fn test_struct_with_optional_field() {
+        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        struct StructWithOptionalField {
+            #[description("The name of the user")]
+            name: String,
+            #[description("The age of the user")]
+            age: Option<u8>,
         }
+
+        let struct_info = StructWithOptionalField::get_info();
+        let parsed_model: StructInfo = match struct_info {
+            InstructMacroResult::Struct(info) => info,
+            _ => {
+                panic!("Expected StructInfo but got a different InstructMacroResult variant");
+            }
+        };
+        let parameters = get_response_model(parsed_model);
+
+        let expected_parameters = chat_completion::FunctionParameters {
+            schema_type: chat_completion::JSONSchemaType::Object,
+            properties: Some({
+                let mut props = std::collections::HashMap::new();
+                props.insert(
+                    "name".to_string(),
+                    Box::new(chat_completion::JSONSchemaDefine {
+                        schema_type: Some(chat_completion::JSONSchemaType::String),
+                        description: Some("The name of the user".to_string()),
+                        ..Default::default()
+                    }),
+                );
+                props.insert(
+                    "age".to_string(),
+                    Box::new(chat_completion::JSONSchemaDefine {
+                        schema_type: Some(chat_completion::JSONSchemaType::Number),
+                        description: Some("The age of the user".to_string()),
+                        ..Default::default()
+                    }),
+                );
+                props
+            }),
+            required: Some(vec!["name".to_string()]), // Only "name" should be required
+        };
+
+        assert_eq!(expected_parameters, parameters);
+    }
+
+    #[test]
+    fn test_struct_with_nested_optional_field() {
+        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        struct User {
+            name: String,
+            age: u8,
+        }
+
+        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        struct MaybeUser {
+            user: Option<User>,
+        }
+
+        let struct_info = MaybeUser::get_info();
+        let parsed_model: StructInfo = match struct_info {
+            InstructMacroResult::Struct(info) => info,
+            _ => {
+                panic!("Expected StructInfo but got a different InstructMacroResult variant");
+            }
+        };
+        let parameters = get_response_model(parsed_model);
+
+        let expected_parameters = chat_completion::FunctionParameters {
+            schema_type: chat_completion::JSONSchemaType::Object,
+            properties: Some({
+                let mut props = std::collections::HashMap::new();
+                props.insert(
+                    "user".to_string(),
+                    Box::new(chat_completion::JSONSchemaDefine {
+                        schema_type: Some(chat_completion::JSONSchemaType::Object),
+                        description: Some("".to_string()),
+                        properties: Some({
+                            let mut user_props = std::collections::HashMap::new();
+                            user_props.insert(
+                                "name".to_string(),
+                                Box::new(chat_completion::JSONSchemaDefine {
+                                    schema_type: Some(chat_completion::JSONSchemaType::String),
+                                    description: Some("".to_string()),
+                                    ..Default::default()
+                                }),
+                            );
+                            user_props.insert(
+                                "age".to_string(),
+                                Box::new(chat_completion::JSONSchemaDefine {
+                                    schema_type: Some(chat_completion::JSONSchemaType::Number),
+                                    description: Some("".to_string()),
+                                    ..Default::default()
+                                }),
+                            );
+                            user_props
+                        }),
+                        ..Default::default()
+                    }),
+                );
+                props
+            }),
+            required: Some(vec![]), // No required fields
+        };
+
         assert_eq!(expected_parameters, parameters);
     }
 }
