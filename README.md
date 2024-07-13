@@ -1,5 +1,7 @@
 # instructor-rs
 
+> We also support llama-cpp!
+
 Instructor is a Rust library that makes it a breeze to work with structured outputs from large language models (LLMs). it provides a simple and easy API to help maanage LLM Workflows by abstrating away validation, retries and streamning responses.
 
 Now, let's see Instructor in action with a simple example:
