@@ -1,6 +1,6 @@
 # instructor-rs
 
-Instructor is a Rust library that makes it a breeze to work with structured outputs from large language models (LLMs). it provides a simple and easy API to help maanage LLM Workflows by abstrating away validation, retries and streamning responses.
+Instructor is a Rust library that makes it a breeze to work with structured outputs from large language models (LLMs). It provides a simple and easy API to help manage LLM Workflows by abstracting away validation, retries and streaming responses.
 
 Now, let's see Instructor in action with a simple example:
 
