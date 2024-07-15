@@ -49,25 +49,21 @@ let instructor_client = from_openai(client);
 // This represents a single user
 struct UserInfo {
     // This represents the name of the user
-    #[serde(deserialize_with = "validate_uppercase")]
+    #[validate(custom = "validate_uppercase")]
     name: String,
     // This represents the age of the user
     age: u8,
 }
 
-fn validate_uppercase<'de, D>(de: D) -> Result<String, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s = String::deserialize(de)?;
-    println!("{}", s);
-    if s.chars().any(|c| c.is_lowercase()) {
-        return Err(de::Error::custom(format!(
+#[validate]
+fn validate_uppercase(name: &String) -> Result<String, String> {
+    if name.chars().any(|c| c.is_lowercase()) {
+        return Err(format!(
             "Name '{}' should be entirely in uppercase. Examples: 'TIMOTHY', 'JANE SMITH'",
-            s
-        )));
+            name
+        ));
     }
-    Ok(s.to_uppercase())
+    Ok(name.to_uppercase())
 }
 
 let req = ChatCompletionRequest::new(

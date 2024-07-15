@@ -90,3 +90,7 @@ markdown_extensions:
 nav:
   - Introduction:
       - Welcome To Instructor: "index.md"
+
+  - Concepts:
+      - Models: "concepts.md"
+      - Types: "types.md"

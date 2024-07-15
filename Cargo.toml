@@ -1,0 +1,4 @@
+[workspace]
+members = ["instruct-macros-types", "instruct-macros", "instructor"]
+
+resolver = "2"

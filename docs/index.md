@@ -1,8 +1,8 @@
-# What is instructor-ai?
+# Instructor
 
 Instructor makes it easy to get structured data like JSON from LLMs like GPT-3.5, GPT-4, GPT-4-Vision, and open-source models including Mistral/Mixtral, Anyscale, Ollama, and llama-cpp-python.
 
-> Instructor's Rust Client is in active developement. This means that the api and package might change moving forward. We are looking for active contributors to the repository in the meantime to help flesh out more of the features.
+> Instructor's Rust Client is in active development. This means that the API and package might change moving forward. We are looking for active contributors to the repository in the meantime to help flesh out more of the features.
 
 ## Roadmap
 
@@ -11,11 +11,11 @@ Here is a rough roadmap of features we'd like to implement
 **Struct -> JSON parsing**
 
 - [x] Strings
-- [ ] Handle Booleans
-- [ ] Integers
-- [ ] Handle String Enums
-- [ ] Lists
-- [ ] Nested Structs
+- [x] Handle Booleans
+- [x] Integers
+- [x] Handle String Enums
+- [x] Lists
+- [x] Nested Structs
 - [ ] Union Types (Eg. Struct1 | Struct 2 )
 
 **Validators**
@@ -43,12 +43,12 @@ Here is a rough roadmap of features we'd like to implement
 To install `instructor-ai`, you'll need to add the following to your cargo.toml file
 
 ```toml
-instructor-ai = "0.1.0"
-instruct-macros = "0.1.1"
+instructor-ai = "0.1.8"
+instruct-macros = "0.1.8"
 openai-api-rs = "4.1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-instruct-macros-types = "0.1.2"
+instruct-macros-types = "0.1.8"
 ```
 
 Getting started with structured extraction is then as simple as declaring a new struct with the `InstructMacro` and importing the `ParamterInfo` and `StructInfo` types.

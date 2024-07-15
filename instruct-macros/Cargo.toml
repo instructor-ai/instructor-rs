@@ -1,6 +1,6 @@
 [package]
 name = "instruct-macros"
-version = "0.1.1"
+version = "0.1.8"
 edition = "2018"
 authors = ["Ivan Leo <ivanleomk@gmail.com>"]
 description = "instruct-macros are a collection of simple macros that we're using in Instructor-AI to generate json schema from Serde Objects"
@@ -17,10 +17,11 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-instruct-macros-types = { path = "../instruct-macros-types", version = "0.1.0" }
+instruct-macros-types = { path = "../instruct-macros-types", version = "0.*" }
+proc-macro2 = "1.0.86"
 
 [dependencies.syn]
-version = "1.0"
+version = "2.0.68"
 features = ["full"]
 
 [dependencies.quote]

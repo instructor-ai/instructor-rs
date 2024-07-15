@@ -1,6 +1,6 @@
 [package]
 name = "instruct-macros-types"
-version = "0.1.2"
+version = "0.1.8"
 edition = "2021"
 authors = ["Ivan Leo <ivanleomk@gmail.com>"]
 description = "Instructor Macro Types are a collection of simple types that we export to work with the instruct-macros crate"

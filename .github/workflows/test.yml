@@ -1,0 +1,54 @@
+name: Cargo Build & Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build Rust project - latest
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - beta
+          - nightly
+        crate:
+          - instruct-macros
+          - instructor
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+      - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
+      - run: cd ${{ matrix.crate }} && cargo build --verbose
+
+  test:
+    name: Test Rust project - latest
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      matrix:
+        toolchain:
+          - stable
+          - beta
+          - nightly
+        crate:
+          - instruct-macros
+          - instructor
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+      - name: Install cargo-nextest
+        run: cargo install cargo-nextest --locked
+      - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
+      - run: cd ${{ matrix.crate }} && cargo nextest run --verbose --retries 3
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
