@@ -2,7 +2,7 @@ use core::fmt;
 use std::env;
 
 use instruct_macros::InstructMacro;
-use instruct_macros_types::{ParameterInfo, StructInfo};
+use instruct_macros_types::{Parameter, ParameterInfo, StructInfo};
 use instructor_ai::from_openai;
 use openai_api_rs::v1::{
     api::Client,
@@ -11,7 +11,7 @@ use openai_api_rs::v1::{
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(InstructMacro, Debug, Serialize, Deserialize)]
 enum SearchType {
     Web,
     Image,
@@ -25,50 +25,46 @@ impl fmt::Display for SearchType {
 }
 
 #[derive(InstructMacro, Debug, Serialize, Deserialize)]
-// This represents a single search
 struct Search {
-    // Topic of the search
+    #[description("Topic of the search")]
     topic: String,
-    // Query to search for relevant content
+    #[description("Query to search for relevant content")]
     query: String,
-    // Type of search
+    #[description("Type of search")]
     stype: SearchType,
 }
 
 impl Search {
     fn execute(&self) {
         println!(
-            "Searching for '{}' with query '{}' using '{}'",
-            self.topic, self.query, self.stype
+            "Executing a(n) {} Search for '{}' from query: '{}'",
+            self.stype, self.topic, self.query,
         )
     }
-}
-
-#[derive(InstructMacro, Debug, Serialize, Deserialize)]
-// This represents a list of searches
-struct Searches {
-    // List of searches
-    items: Vec<Search>,
 }
 
 fn main() {
     let client = Client::new(env::var("OPENAI_API_KEY").unwrap().to_string());
     let instructor_client = from_openai(client);
 
+    let q = "Search for a picture of a cat";
+
     let req = ChatCompletionRequest::new(
         GPT4_O.to_string(),
         vec![chat_completion::ChatCompletionMessage {
             role: chat_completion::MessageRole::user,
-            content: chat_completion::Content::Text(String::from(
-                "Search for a picture of a cat, a video of a dog, and the taxonomy of each",
-            )),
+            content: chat_completion::Content::Text(String::from(format!(
+                "Consider the data below and segment it into a search quer:\n{}",
+                q
+            ))),
             name: None,
         }],
     );
 
-    let searches = instructor_client
-        .chat_completion::<Searches>(req, 3)
-        .unwrap();
+    let search = instructor_client.chat_completion::<Search>(req, 3).unwrap();
 
-    searches.items.iter().for_each(|search| search.execute());
+    search.execute()
+    /*
+    Executing a(n) Image Search for 'cat' from query: 'picture of a cat'
+    */
 }

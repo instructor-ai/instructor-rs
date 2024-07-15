@@ -1,4 +1,5 @@
 [workspace]
 members = ["instruct-macros-types", "instruct-macros", "instructor"]
+exclude = ["examples"]
 
 resolver = "2"
