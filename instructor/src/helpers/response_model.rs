@@ -179,13 +179,13 @@ mod tests {
     use super::*;
     use instruct_macros::InstructMacro;
     use instruct_macros_types::{
-        InstructMacro, InstructMacroResult, Parameter, ParameterInfo, StructInfo,
+        InstructMacro, InstructMacroResult, Parameter, ParameterInfo, StructInfo, Validate,
     };
     use serde::{Deserialize, Serialize};
 
     #[test]
     fn test_person_with_nested_address() {
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         struct Person {
             #[description("The name of the person")]
             name: String,
@@ -195,7 +195,7 @@ mod tests {
             address: Address,
         }
 
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         #[description("The address of the person")]
         struct Address {
             #[description("The street of the address")]
@@ -285,7 +285,7 @@ mod tests {
 
     #[test]
     fn test_person_with_enum_job() {
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         struct Person {
             #[description("The name of the person")]
             name: String,
@@ -361,7 +361,7 @@ mod tests {
 
     #[test]
     fn test_simple_struct() {
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         struct SimpleStruct {
             #[description("The name of the user")]
             name: String,
@@ -408,7 +408,7 @@ mod tests {
 
     #[test]
     fn test_struct_with_optional_field() {
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         struct StructWithOptionalField {
             #[description("The name of the user")]
             name: String,
@@ -455,13 +455,13 @@ mod tests {
 
     #[test]
     fn test_struct_with_nested_optional_field() {
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         struct User {
             name: String,
             age: u8,
         }
 
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         struct MaybeUser {
             user: Option<User>,
         }
@@ -517,7 +517,7 @@ mod tests {
 
     #[test]
     fn test_struct_with_vec_of_i32() {
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         struct Numbers {
             #[description("A list of numbers")]
             numbers: Vec<i32>,
@@ -558,11 +558,11 @@ mod tests {
 
     #[test]
     fn test_struct_with_vec_of_users() {
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         struct User {
             name: String,
         }
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         struct Users {
             #[description("A list of users")]
             users: Vec<User>,
@@ -622,7 +622,7 @@ mod tests {
             Artist,
         }
 
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         struct Person {
             #[description("The name of the person")]
             name: String,

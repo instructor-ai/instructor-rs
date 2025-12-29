@@ -1,9 +1,10 @@
 extern crate instruct_macros_types;
 
-use instruct_macros::{validate, InstructMacro};
+use instruct_macros::InstructMacro;
 use instruct_macros_types::{
-    InstructMacro, InstructMacroResult, Parameter, ParameterInfo, StructInfo,
+    InstructMacro, InstructMacroResult, Parameter, ParameterInfo, StructInfo, Validate,
 };
+use validator::ValidationError;
 
 #[cfg(test)]
 mod tests {
@@ -14,7 +15,7 @@ mod tests {
 
     #[test]
     fn test_string_conversion() {
-        #[derive(InstructMacro, Debug)]
+        #[derive(InstructMacro, Validate, Debug)]
         #[allow(dead_code)]
         #[description("This is a struct")]
         struct TestStruct {
@@ -61,24 +62,26 @@ mod tests {
         assert!(info_struct == desired_struct);
     }
 
+    fn validate_uppercase(name: &str) -> Result<(), ValidationError> {
+        if name.chars().any(|c| c.is_lowercase()) {
+            let mut error = ValidationError::new("uppercase");
+            error.message = Some(format!(
+                "Name '{}' should be entirely in uppercase",
+                name
+            ).into());
+            return Err(error);
+        }
+        Ok(())
+    }
+
     #[test]
     fn test_validation_macro() {
-        #[derive(InstructMacro, Debug)]
+        #[derive(InstructMacro, Validate, Debug)]
         pub struct UserInfo {
-            #[validate(custom = "validate_uppercase")]
+            #[validate(custom(function = "validate_uppercase"))]
             pub name: String,
+            #[validate(range(min = 0, max = 150))]
             pub age: u8,
-        }
-
-        #[validate]
-        fn validate_uppercase(name: &String) -> Result<String, String> {
-            if name.chars().any(|c| c.is_lowercase()) {
-                return Err(format!(
-                    "Name '{}' should be entirely in uppercase. Examples: 'TIMOTHY', 'JANE SMITH'",
-                    name
-                ));
-            }
-            Ok(name.to_uppercase())
         }
 
         let user_info = UserInfo {
@@ -86,31 +89,33 @@ mod tests {
             age: 100,
         };
 
-        assert_eq!(
-            user_info.validate().unwrap_err(),
-            "Validation failed for field 'name': Name 'JoHn DoE' should be entirely in uppercase. Examples: 'TIMOTHY', 'JANE SMITH'"
-        );
+        // Test that validation fails for lowercase name
+        let result = user_info.validate_struct();
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("uppercase"));
 
         let user_info = UserInfo {
             name: "JOHN DOE".to_string(),
             age: 30,
         };
 
-        assert!(user_info.validate().is_ok());
+        // Test that validation passes for uppercase name
+        assert!(user_info.validate_struct().is_ok());
     }
 
     #[test]
     fn test_nested_struct_macro() {
-        #[derive(InstructMacro, Debug)]
+        #[derive(InstructMacro, Validate, Debug)]
         pub struct Address {
             pub street: String,
             pub city: String,
         }
 
-        #[derive(InstructMacro, Debug)]
+        #[derive(InstructMacro, Validate, Debug)]
         pub struct User {
             pub name: String,
             pub age: u8,
+            #[validate(nested)]
             pub address: Address,
         }
 
@@ -212,7 +217,7 @@ mod tests {
             Pending,
         }
 
-        #[derive(InstructMacro, Debug)]
+        #[derive(InstructMacro, Validate, Debug)]
         #[allow(dead_code)]
         pub struct User {
             name: String,

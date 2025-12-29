@@ -2,7 +2,7 @@ extern crate instruct_macros;
 extern crate instruct_macros_types;
 
 use instruct_macros::InstructMacro;
-use instruct_macros_types::{Parameter, ParameterInfo, StructInfo};
+use instruct_macros_types::{Parameter, ParameterInfo, StructInfo, Validate};
 use instructor_ai::from_openai;
 use openai_api_rs::v1::api::Client;
 
@@ -23,7 +23,7 @@ mod tests {
         let client = Client::new(env::var("OPENAI_API_KEY").unwrap().to_string());
         let instructor_client = from_openai(client);
 
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         struct MaybeUser {
             #[description(
                 "This is an optional name of a person. If no user name can be found, the field will be null"
@@ -53,13 +53,13 @@ mod tests {
         let client = Client::new(env::var("OPENAI_API_KEY").unwrap().to_string());
         let instructor_client = from_openai(client);
 
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         struct UserInfo {
             name: String,
             age: u8,
         }
 
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         struct MaybeUser {
             #[description("This is an optional user field. If the user is not present, the field will be null")]
             user: Option<UserInfo>,

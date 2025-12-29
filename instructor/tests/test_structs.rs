@@ -2,7 +2,7 @@ extern crate instruct_macros;
 extern crate instruct_macros_types;
 
 use instruct_macros::InstructMacro;
-use instruct_macros_types::{Parameter, ParameterInfo, StructInfo};
+use instruct_macros_types::{Parameter, ParameterInfo, StructInfo, Validate};
 use instructor_ai::from_openai;
 use openai_api_rs::v1::api::Client;
 
@@ -30,7 +30,7 @@ mod tests {
             NotSpam,
         }
 
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         #[description("This is a struct representing an email classification")]
         struct Email {
             #[description("Reasoning")]
@@ -59,7 +59,7 @@ mod tests {
         let client = Client::new(env::var("OPENAI_API_KEY").unwrap().to_string());
         let instructor_client = from_openai(client);
 
-        #[derive(InstructMacro, Debug, Serialize, Deserialize, PartialEq)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize, PartialEq)]
         #[description("This is a struct representing an address")]
         struct Address {
             #[description("The street of the address")]
@@ -70,7 +70,7 @@ mod tests {
             country: String,
         }
 
-        #[derive(InstructMacro, Debug, Serialize, Deserialize, PartialEq)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize, PartialEq)]
         #[description("This is a struct representing user details")]
         struct UserDetail {
             #[description("The age of the user")]
@@ -78,6 +78,7 @@ mod tests {
             #[description("The name of the user")]
             name: String,
             #[description("The address of the user")]
+            #[validate(nested)]
             address: Address,
             #[description("The security clearance of the user")]
             security_clearance: SecurityClearance,

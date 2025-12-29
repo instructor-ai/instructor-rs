@@ -2,7 +2,7 @@ extern crate instruct_macros_types;
 
 use instruct_macros::InstructMacro;
 use instruct_macros_types::{
-    InstructMacro, InstructMacroResult, Parameter, ParameterInfo, StructInfo,
+    InstructMacro, InstructMacroResult, Parameter, ParameterInfo, StructInfo, Validate,
 };
 
 #[cfg(test)]
@@ -11,7 +11,7 @@ mod tests {
 
     #[test]
     fn test_option_type_support() {
-        #[derive(InstructMacro, Debug)]
+        #[derive(InstructMacro, Validate, Debug)]
         #[allow(dead_code)]
         #[description("This is a struct with Option types")]
         struct TestOptionStruct {
@@ -55,7 +55,7 @@ mod tests {
 
     #[test]
     fn test_option_maybe_struct() {
-        #[derive(InstructMacro, Debug)]
+        #[derive(InstructMacro, Validate, Debug)]
         #[allow(dead_code)]
         #[description("This is a user struct")]
         struct User {
@@ -65,7 +65,7 @@ mod tests {
             pub age: i32,
         }
 
-        #[derive(InstructMacro, Debug)]
+        #[derive(InstructMacro, Validate, Debug)]
         #[allow(dead_code)]
         #[description("This is a struct with Option<user> type")]
         struct MaybeUser {

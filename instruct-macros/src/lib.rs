@@ -4,9 +4,29 @@ mod helpers;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Attribute, Data, DeriveInput, Expr, ExprLit, Fields, Lit, Meta};
+use syn::{parse_macro_input, Attribute, Data, DeriveInput, Fields};
 
-#[proc_macro_derive(InstructMacro, attributes(validate, description))]
+/// Derive macro for InstructMacro trait.
+///
+/// This macro generates the implementation for extracting struct/enum metadata
+/// for LLM function calling. For validation, use the `validator` crate's
+/// `#[derive(Validate)]` along with this macro.
+///
+/// # Example
+/// ```rust,ignore
+/// use instruct_macros::InstructMacro;
+/// use validator::Validate;
+/// use serde::{Serialize, Deserialize};
+///
+/// #[derive(InstructMacro, Validate, Serialize, Deserialize)]
+/// struct UserInfo {
+///     #[validate(length(min = 1))]
+///     name: String,
+///     #[validate(range(min = 0, max = 150))]
+///     age: u8,
+/// }
+/// ```
+#[proc_macro_derive(InstructMacro, attributes(description))]
 pub fn instruct_validate_derive(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let input = parse_macro_input!(input as DeriveInput);
@@ -40,20 +60,22 @@ fn generate_instruct_macro_enum(input: &DeriveInput) -> proc_macro2::TokenStream
             r#enum: vec![#(#enum_variants.to_string()),*],
             r#type: stringify!(#name).to_string(),
             description: #description.to_string(),
-            is_optional:false,
+            is_optional: false,
             is_list: false
         })
     };
 
     quote! {
+        // Enums don't need field validation, implement empty Validate
+        impl ::validator::Validate for #name {
+            fn validate(&self) -> Result<(), ::validator::ValidationErrors> {
+                Ok(())
+            }
+        }
+
         impl instruct_macros_types::InstructMacro for #name {
             fn get_info() -> instruct_macros_types::InstructMacroResult {
                 #enum_info
-            }
-
-
-            fn validate(&self) -> Result<(), String> {
-                Ok(())
             }
         }
     }
@@ -78,28 +100,6 @@ fn generate_instruct_macro_struct(input: &DeriveInput) -> proc_macro2::TokenStre
 
     let description = extract_attribute_value(&input.attrs, "description");
 
-    let fields = match &input.data {
-        Data::Struct(data) => match &data.fields {
-            Fields::Named(fields) => &fields.named,
-            _ => panic!("Only named fields are supported"),
-        },
-        _ => panic!("Only structs are supported"),
-    };
-
-    let validation_fields: Vec<_> = fields
-        .iter()
-        .filter_map(|f| {
-            let field_name = &f.ident;
-            f.attrs
-                .iter()
-                .find(|attr| attr.path().is_ident("validate"))
-                .map(|attr| {
-                    let meta = attr.parse_args().expect("Unable to parse attribute");
-                    parse_validation_attribute(field_name, &meta)
-                })
-        })
-        .collect();
-
     // Process each field in the struct
     let fields = if let Data::Struct(data) = &input.data {
         if let Fields::Named(fields) = &data.fields {
@@ -123,72 +123,12 @@ fn generate_instruct_macro_struct(input: &DeriveInput) -> proc_macro2::TokenStre
                     name: stringify!(#name).to_string(),
                     description: #description.to_string(),
                     parameters,
-                    is_optional:false,
+                    is_optional: false,
                     is_list: false,
                 })
-            }
-
-            fn validate(&self) -> Result<(), String> {
-                #(#validation_fields)*
-                Ok(())
             }
         }
     };
 
     expanded
-}
-
-/// Parses the validation attribute and generates corresponding validation code.
-///
-/// This function processes custom validation attributes, expanding them into function calls
-/// that perform the specified validation. It supports custom validators that take a reference
-/// to the field type and return a Result with a string error type.
-fn parse_validation_attribute(
-    field_name: &Option<syn::Ident>,
-    meta: &Meta,
-) -> proc_macro2::TokenStream {
-    let mut output = proc_macro2::TokenStream::new();
-
-    match meta {
-        Meta::NameValue(name_value) if name_value.path.is_ident("custom") => {
-            if let Expr::Lit(ExprLit {
-                lit: Lit::Str(lit_str),
-                ..
-            }) = &name_value.value
-            {
-                let func = syn::Ident::new(&lit_str.value(), proc_macro2::Span::call_site());
-                let tokens = quote! {
-                    if let Err(e) = #func(&self.#field_name) {
-                        return Err(format!("Validation failed for field '{}': {}", stringify!(#field_name), e));
-                    }
-                };
-                output.extend(tokens);
-            } else {
-                panic!("Custom validator must be a string literal");
-            }
-        }
-        _ => panic!("Unsupported validation attribute"),
-    }
-
-    output
-}
-
-/// Custom attribute macro for field validation in structs.
-///
-/// This procedural macro attribute is designed to be applied to structs,
-/// enabling custom validation for their fields. When the `validate` method
-/// is called on an instance of the decorated struct, it triggers the specified
-/// custom validation functions for each annotated field.
-#[proc_macro_attribute]
-pub fn validate(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(item as syn::ItemFn);
-    let syn::ItemFn { sig, block, .. } = input;
-
-    let expanded = quote! {
-        #sig {
-            #block
-        }
-    };
-
-    TokenStream::from(expanded)
 }

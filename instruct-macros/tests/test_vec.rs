@@ -2,7 +2,7 @@ extern crate instruct_macros_types;
 
 use instruct_macros::InstructMacro;
 use instruct_macros_types::{
-    InstructMacro, InstructMacroResult, Parameter, ParameterInfo, StructInfo,
+    InstructMacro, InstructMacroResult, Parameter, ParameterInfo, StructInfo, Validate,
 };
 
 #[cfg(test)]
@@ -11,7 +11,7 @@ mod tests {
 
     #[test]
     fn test_vec_simple_type() {
-        #[derive(InstructMacro, Debug)]
+        #[derive(InstructMacro, Validate, Debug)]
         #[description("This is a struct with Option types")]
         struct Numbers {
             #[description("This is a list of numbers")]
@@ -44,14 +44,14 @@ mod tests {
 
     #[test]
     fn test_vec_struct() {
-        #[derive(InstructMacro, Debug)]
+        #[derive(InstructMacro, Validate, Debug)]
         #[description("This is a struct with Option types")]
         struct User {
             #[description("This is a list of numbers")]
             pub name: String,
         }
 
-        #[derive(InstructMacro, Debug)]
+        #[derive(InstructMacro, Validate, Debug)]
         #[description("This is a struct with Option types")]
         struct Users {
             #[description("This is a list of users")]

@@ -18,6 +18,7 @@ openai-api-rs = "4.1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 instruct-macros-types = { path = "../instruct-macros-types", version = "0.*" }
+validator = { version = "0.19", features = ["derive"] }
 
 [lib]
 name = "instructor_ai"

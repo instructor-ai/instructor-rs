@@ -1,8 +1,32 @@
 use serde::{Deserialize, Serialize};
 
-pub trait InstructMacro {
+// Re-export validator types for convenience
+pub use validator::{Validate, ValidationError, ValidationErrors};
+
+pub trait InstructMacro: Validate {
     fn get_info() -> InstructMacroResult;
-    fn validate(&self) -> Result<(), String>;
+
+    /// Validates the struct using the validator crate.
+    /// Returns Ok(()) if validation passes, or a formatted error message.
+    fn validate_struct(&self) -> Result<(), String> {
+        self.validate().map_err(|e| format_validation_errors(&e))
+    }
+}
+
+/// Formats ValidationErrors into a human-readable string
+fn format_validation_errors(errors: &ValidationErrors) -> String {
+    let mut messages = Vec::new();
+    for (field, field_errors) in errors.field_errors() {
+        for error in field_errors {
+            let msg = error
+                .message
+                .as_ref()
+                .map(|m| m.to_string())
+                .unwrap_or_else(|| error.code.to_string());
+            messages.push(format!("{}: {}", field, msg));
+        }
+    }
+    messages.join("; ")
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

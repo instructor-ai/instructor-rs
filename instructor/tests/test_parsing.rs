@@ -2,7 +2,7 @@ extern crate instruct_macros;
 extern crate instruct_macros_types;
 
 use instruct_macros::InstructMacro;
-use instruct_macros_types::{Parameter, ParameterInfo, StructInfo};
+use instruct_macros_types::{Parameter, ParameterInfo, StructInfo, Validate};
 use instructor_ai::from_openai;
 use openai_api_rs::v1::api::Client;
 
@@ -23,7 +23,7 @@ mod tests {
         let client = Client::new(env::var("OPENAI_API_KEY").unwrap().to_string());
         let instructor_client = from_openai(client);
 
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         // This represents a single user
         struct UserInfo {
             // This represents the name of the user

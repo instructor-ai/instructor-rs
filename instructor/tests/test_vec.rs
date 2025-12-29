@@ -2,7 +2,7 @@ extern crate instruct_macros;
 extern crate instruct_macros_types;
 
 use instruct_macros::InstructMacro;
-use instruct_macros_types::{Parameter, ParameterInfo, StructInfo};
+use instruct_macros_types::{Parameter, ParameterInfo, StructInfo, Validate};
 use instructor_ai::from_openai;
 use openai_api_rs::v1::api::Client;
 
@@ -23,7 +23,7 @@ mod tests {
         let client = Client::new(env::var("OPENAI_API_KEY").unwrap().to_string());
         let instructor_client = from_openai(client);
 
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         struct UserIds {
             #[description("This is a list of user ids that we extracted from the message")]
             user_ids: Vec<String>,
@@ -52,14 +52,14 @@ mod tests {
         let client = Client::new(env::var("OPENAI_API_KEY").unwrap().to_string());
         let instructor_client = from_openai(client);
 
-        #[derive(InstructMacro, Debug, Serialize, Deserialize, PartialEq)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize, PartialEq)]
         #[description("This is a user that we extracted from the text")]
         struct User {
             name: String,
             age: String,
         }
 
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         #[description("Users that are present in the sentence provided")]
         struct Users {
             users: Vec<User>,

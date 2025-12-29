@@ -1,10 +1,22 @@
 extern crate instruct_macros;
 extern crate instruct_macros_types;
 
-use instruct_macros::{validate, InstructMacro};
-use instruct_macros_types::{Parameter, ParameterInfo, StructInfo};
+use instruct_macros::InstructMacro;
+use instruct_macros_types::{Parameter, ParameterInfo, StructInfo, Validate, ValidationError};
 use instructor_ai::from_openai;
 use openai_api_rs::v1::api::Client;
+
+fn validate_uppercase(name: &str) -> Result<(), ValidationError> {
+    if name.chars().any(|c| c.is_lowercase()) {
+        let mut error = ValidationError::new("uppercase");
+        error.message = Some(format!(
+            "Name '{}' should be entirely in uppercase",
+            name
+        ).into());
+        return Err(error);
+    }
+    Ok(())
+}
 
 #[cfg(test)]
 mod tests {
@@ -23,25 +35,14 @@ mod tests {
         let client = Client::new(env::var("OPENAI_API_KEY").unwrap().to_string());
         let instructor_client = from_openai(client);
 
-        #[derive(InstructMacro, Debug, Serialize, Deserialize)]
+        #[derive(InstructMacro, Validate, Debug, Serialize, Deserialize)]
         // This represents a single user
         struct UserInfo {
             // This represents the name of the user
-            #[validate(custom = "validate_uppercase")]
+            #[validate(custom(function = "validate_uppercase"))]
             name: String,
             // This represents the age of the user
             age: u8,
-        }
-
-        #[validate]
-        fn validate_uppercase(name: &String) -> Result<String, String> {
-            if name.chars().any(|c| c.is_lowercase()) {
-                return Err(format!(
-                    "Name '{}' should be entirely in uppercase. Examples: 'TIMOTHY', 'JANE SMITH'",
-                    name
-                ));
-            }
-            Ok(name.to_uppercase())
         }
 
         let req = ChatCompletionRequest::new(

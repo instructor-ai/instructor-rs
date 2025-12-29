@@ -52,11 +52,11 @@ impl InstructorClient {
 
             match result {
                 Ok(value) => {
-                    match T::validate(&value) {
+                    match value.validate_struct() {
                         Ok(_) => {}
                         Err(e) => {
                             error_message =
-                                Some(format!("Validation Error: {:?}. Please fix the issue", e));
+                                Some(format!("Validation Error: {}. Please fix the issue", e));
                             continue;
                         }
                     }
