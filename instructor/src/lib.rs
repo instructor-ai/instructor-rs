@@ -140,3 +140,25 @@ impl InstructorClient {
 pub fn from_openai(client: Client) -> InstructorClient {
     InstructorClient::new(client)
 }
+
+/// Creates an InstructorClient with a custom API endpoint.
+/// This enables support for OpenAI-compatible servers like llama-cpp, ollama, etc.
+///
+/// # Arguments
+/// * `api_endpoint` - The base URL of the API endpoint (e.g., "http://localhost:8080/v1")
+/// * `api_key` - The API key for authentication (can be empty for local servers)
+///
+/// # Example
+/// ```rust,ignore
+/// use instructor_ai::from_openai_with_endpoint;
+///
+/// // Connect to a local llama-cpp server
+/// let instructor_client = from_openai_with_endpoint(
+///     "http://localhost:8080/v1".to_string(),
+///     "".to_string()  // No API key needed for local server
+/// );
+/// ```
+pub fn from_openai_with_endpoint(api_endpoint: String, api_key: String) -> InstructorClient {
+    let client = Client::new_with_endpoint(api_endpoint, api_key);
+    InstructorClient::new(client)
+}
